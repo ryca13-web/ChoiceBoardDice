@@ -276,6 +276,11 @@ body[data-space="wide"] { line-height: 1.75; letter-spacing: 0.02em; word-spacin
 .t-body .field > span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .t-body input[type="text"], .t-body input[type="password"] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-height: 42px; width: 100%; min-width: 0; }
 code { font-family: var(--font-mono); font-size: 0.92em; overflow-wrap: anywhere; }
+#subject { grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); }
+#subject span { padding-left: 4px; padding-right: 4px; }
+.kicker { margin: 0; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.t-body label.row { display: flex; align-items: center; gap: 8px; }
+.t-body input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--btn-bg); flex: none; }
 .credits { margin: 0; font-size: 0.7812rem; color: var(--muted); max-width: 62ch; text-wrap: pretty; }
 
 html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
@@ -287,15 +292,13 @@ body { margin: 0; }
 
 <div class="wrap" id="app" data-locked="false">
   <header>
+    <p class="kicker" id="subject-name" hidden></p>
     <h1>Choice Dice</h1>
     <p class="lede">Roll seven dice to build a class activity: the task, the skill, how to work, how to show it, what help to use, and how long. Every die can be changed.</p>
   </header>
 
   <fieldset class="seg" id="subject">
     <legend class="sr">Subject</legend>
-    <label><input type="radio" name="subject" value="ela"><span>ELA</span></label>
-    <label><input type="radio" name="subject" value="math"><span>Math</span></label>
-    <label><input type="radio" name="subject" value="study"><span>Study Skills</span></label>
   </fieldset>
 
   <div class="prefs">
@@ -369,7 +372,7 @@ body { margin: 0; }
   var SIDES = [4, 6, 8, 10, 12, 20];
   var MAX_DICE = 8;
   var HUES = ['--h-d10', '--h-d12', '--h-d8', '--h-d6', '--h-d4', '--h-d20', '--h-x1', '--h-x2'];
-  var SUBJECT_KEYS = ['ela', 'math', 'study'];
+  var SUBJECT_KEYS = ['ela', 'math', 'science', 'social', 'study', 'pe', 'art', 'music'];
 
   // Faces are written as "Name | note". The note part is optional. All ideas are original.
   var SUBJECTS = {
@@ -514,6 +517,218 @@ body { margin: 0; }
 
   var DEFAULT_SET = [[20, 'task'], [12, 'focus'], [4, 'group'], [6, 'show'], [8, 'support'], [10, 'minutes'], [10, 'count']];
 
+
+  // More subjects. Task ideas are original. Optional "show" and "support" lists replace the generic ones for that subject.
+  SUBJECTS.math.show = ['Write it | Show your steps', 'Draw it | A picture or diagram', 'Say it out loud | Explain your thinking', 'Use a table | Organize the numbers', 'Build a model | Use objects you have', 'Graph it | Plot the data'];
+  SUBJECTS.math.support = ['Word bank | List the key words first', 'Multiplication chart | Use it to check', 'Calculator | Use it to check', 'Number line | Mark and count', 'Worked example | Look at one first', 'Checklist | Check off each step', 'Graph paper | Keep numbers lined up', 'Timer | Watch the time'];
+
+  SUBJECTS.science = {
+    label: 'Science',
+    task: [
+      'Sketch and Label | Draw something from today’s lesson. Label at least 5 parts.',
+      'Ask a Question | Write a question you can test. Write what you think will happen and why.',
+      'Plan a Fair Test | Pick one thing to change and keep everything else the same. Write your steps.',
+      'Data Table | Make a table for a measurement you took. Add a title and units.',
+      'Graph It | Turn a data table into a bar or line graph. Write one thing it shows.',
+      'Claim and Evidence | Make a claim. Give two pieces of evidence. Explain why they support it.',
+      'Vocabulary Cards | Make 4 cards. Each has a science word, its meaning, and a picture.',
+      'Model It | Draw or build a model of a process, like the water cycle or a food chain.',
+      'Cause and Effect Chain | Show how one change leads to another with arrows.',
+      'Compare and Contrast | Compare two living things, materials, or forces in a Venn diagram.',
+      'Science in the News | Read a short science article. Write the main idea and one new thing you learned.',
+      'Observe Outside | Look at one spot outside for 5 minutes. Write 5 observations.',
+      'Design a Solution | Pick a problem. Sketch 2 ideas and choose the better one. Explain why.',
+      'Energy Tracker | List 5 places where energy changes form around you, like a lamp or a toaster.',
+      'Food Web | Draw a food web with at least 6 living things. Show who eats what.',
+      'Weather Log | Record the weather for 3 days. Write one pattern you notice.',
+      'Explain It to a Friend | Write a short explanation of today’s topic for a younger student.',
+      'Predict and Test | Make a prediction. Test it if you can. Write what happened.',
+      'Safety Check | List 5 safety rules for a lab. Explain why each one matters.',
+      'Lab Reflection | Write what went well, what surprised you, and what you would change.'
+    ],
+    focus: [
+      'Scientific questions | Asking what can be tested',
+      'Data and evidence | Using what you measured',
+      'Cells | The building blocks of life',
+      'Ecosystems | Living things and their home',
+      'Matter | What things are made of',
+      'Energy | How it moves and changes',
+      'Forces and motion | Pushes, pulls, and speed',
+      'Waves and light | How energy travels',
+      'Weather and climate | Air, water, and patterns',
+      'Earth’s surface | Rocks, plates, and landforms',
+      'Space | Planets, stars, and the Sun',
+      'Engineering design | Solving a problem step by step'
+    ],
+    show: ['Write it | Sentences or a list', 'Draw and label it | A picture with parts named', 'Say it out loud | Explain to someone', 'Make a model | Build the idea', 'Make a chart or graph | Show the data', 'Act it out | Show the process'],
+    support: ['Word bank | List the key words first', 'Sentence starters | Use them to begin', 'Graphic organizer | Fill in the boxes', 'Checklist | Check off each step', 'Data table template | Fill in the rows', 'Worked example | Look at one first', 'Lab safety card | Read it first', 'Timer | Watch the time']
+  };
+
+  SUBJECTS.social = {
+    label: 'Social Studies',
+    task: [
+      'Timeline | Put 6 events in order. Add a date and a small picture to each.',
+      'Map It | Draw a simple map. Add a title, a key, and 5 labels.',
+      'Primary or Secondary | Find one primary source and one secondary source. Explain how they differ.',
+      'Five Questions | Answer who, what, where, when, and why about an event.',
+      'Cause and Effect | Show 3 causes and effects of an event with arrows.',
+      'Compare Two | Compare two places, groups, or time periods. Write 2 likenesses and 2 differences.',
+      'Day in the Life | Write a short story about a day in the life of a person from long ago.',
+      'Vocabulary Cards | Make 4 cards. Each has a word, its meaning, and a quick sketch.',
+      'Two Points of View | Write about one event from two different points of view.',
+      'Design a Symbol | Design a symbol for a group or an idea. Explain what each part means.',
+      'Geography Clues | Describe how land, water, or climate shaped how people lived.',
+      'Artifact Detective | Pick an artifact. Write what it is made of, how it was used, and what it tells us.',
+      'Rules and Laws | List 5 rules of a community. Explain what problem each one solves.',
+      'Trade Route | Plan a trade route. List what goes each way and why.',
+      'Fact or Opinion | Find 3 facts and 3 opinions in a short text. Sort them in a chart.',
+      'Interview Questions | Write 5 questions you would ask a person from history.',
+      'Big Idea Poster | Make a poster with a picture and one sentence that show today’s big idea.',
+      'Then and Now | Show how something changed from the past to today.',
+      'Current Event | Read a short news piece. Write who, what, where, and why it matters.',
+      'Reflection | Write one thing you learned and one question you still have.'
+    ],
+    focus: [
+      'Timelines | Putting events in order',
+      'Maps and geography | Places and land',
+      'Early peoples | How the first communities lived',
+      'Civilizations | Cities, farming, and writing',
+      'Government | How groups make decisions',
+      'Trade and money | How people exchange goods',
+      'Culture and belief | Traditions and ideas',
+      'Primary sources | Evidence from the time',
+      'Cause and effect | Why events happened',
+      'Rights and responsibilities | What people owe each other',
+      'Points of view | Who is telling the story',
+      'Current events | What is happening now'
+    ]
+  };
+
+  SUBJECTS.pe = {
+    label: 'PE',
+    task: [
+      'Warm-Up Leader | Lead 3 warm-up moves. Count out 8 of each. Move in ways that feel safe for your body.',
+      'Heart Rate Check | Move for 2 minutes. Find your pulse and count for 15 seconds. Write the number.',
+      'Balance Challenge | Hold 3 different balances for 10 seconds each. Make one of them harder.',
+      'Create a Circuit | Design a 4-station circuit. Do each station for 30 seconds.',
+      'Stretch Routine | Do 5 stretches. Hold each for 20 seconds. Name the muscle you feel.',
+      'Throw and Catch | Practice with a partner or a wall. Count how many in a row.',
+      'Walk or Jog Plan | Walk or jog for a time you choose. Write how you felt before and after.',
+      'Teamwork Game | Make up a simple game for 2 to 4 players. Write 3 rules and play it.',
+      'Fitness Log | Write what you did for exercise today and for how long.',
+      'Jump Count | Do 3 sets of jumping jacks or jump rope. Rest between sets. Try to beat your count.',
+      'Strength Moves | Do 3 body-weight moves, like squats or wall push-ups. Do 8 of each.',
+      'Move to the Beat | Make a 30-second move routine to a steady beat. Teach it to a partner.',
+      'Goal Setting | Pick one fitness goal for this week. Write 2 steps to reach it.',
+      'Skill Practice | Practice one skill, like dribbling or kicking. Notice what helps you improve.',
+      'Slow Flow | Link 4 stretching poses. Breathe in and out slowly in each one.',
+      'Fair Play Check | Write one way to show good sportsmanship. Practice it in a game.',
+      'Rest and Recover | List 3 ways to help your body recover after exercise.',
+      'Healthy Habit | Pick a habit like water, sleep, or snacks. Track it for the day.',
+      'Obstacle Course | Build a course with 5 steps using what you have. Try it twice.',
+      'Reflection | Write what you enjoyed, what was hard, and what you will try next.'
+    ],
+    focus: [
+      'Heart and lungs | Moving to raise your heart rate',
+      'Strength | Using your muscles',
+      'Flexibility | Stretching safely',
+      'Balance | Staying steady',
+      'Coordination | Moving body parts together',
+      'Teamwork | Working well with others',
+      'Sportsmanship | Playing fair',
+      'Warm-up and cool-down | Getting ready and slowing down',
+      'Pulse and effort | Noticing how hard you work',
+      'Goal setting | Picking and tracking a target',
+      'Healthy habits | Sleep, water, and food',
+      'Rules and safety | Keeping everyone safe'
+    ],
+    show: ['Do it | Show the movement', 'Explain it out loud | Say how it works', 'Draw it | Sketch the moves', 'Write it | Fill in a log', 'Teach a partner | Show and tell', 'Count it | Track reps or time'],
+    support: ['Demonstration | Watch a model first', 'Picture cards | Steps in pictures', 'Partner help | Work with a buddy', 'Lower-impact option | Choose a gentler move', 'Smaller space | Use a close-by spot', 'Rest breaks | Take them when you need', 'Counting aid | Use a tally', 'Timer | Watch the time']
+  };
+
+  SUBJECTS.art = {
+    label: 'Art',
+    task: [
+      'Line Study | Fill a page with 5 kinds of lines: straight, curved, zigzag, thick, and thin.',
+      'Color Mix | Mix secondary colors from primary colors. Make a color wheel.',
+      'Draw from Life | Look at one object and draw it for 5 minutes. Add shading.',
+      'Pattern Page | Create a repeating pattern with at least 3 shapes.',
+      'Shade a Sphere | Draw a ball and shade it from light to dark.',
+      'Texture Rubbings | Make rubbings of 5 textures. Label each one.',
+      'Mood Picture | Pick a feeling. Use color and lines to show it.',
+      'Collage | Cut or tear paper to make a picture. Overlap at least 3 pieces.',
+      'Symmetry Design | Fold paper and make a design that is the same on both sides.',
+      'Face Proportions | Draw a face using guide lines for the eyes, nose, and mouth. Check the spacing.',
+      'Landscape | Draw a scene with a foreground, a middle ground, and a background.',
+      'Comic Strip | Draw a 4-panel comic strip that tells a tiny story.',
+      'Art Critique | Look at an artwork. Describe it, say what you think it means, and say what you like.',
+      'Sculpt It | Use clay or foil to make a small sculpture. Check it from all sides.',
+      'Club Logo | Design a simple logo for a club. Use 2 colors.',
+      'Perspective Street | Draw a street or hallway using one-point perspective.',
+      'Found Object Art | Make art from clean objects you can find. Give it a title.',
+      'Sketch Warm-Up | Fill a page with quick sketches of things near you.',
+      'Weave or Fold | Weave paper strips or fold a paper form.',
+      'Artist Statement | Write 3 sentences about what you made and why.'
+    ],
+    focus: [
+      'Line | Marks that move',
+      'Shape | Flat forms',
+      'Color | Hue, mixing, and mood',
+      'Value | Light and dark',
+      'Texture | How a surface feels or looks',
+      'Form | Shapes you can walk around',
+      'Space | Near, far, and empty',
+      'Pattern | Repeating parts',
+      'Balance | Even weight in a picture',
+      'Contrast | Strong differences',
+      'Movement | Where the eye travels',
+      'Composition | How everything is arranged'
+    ],
+    show: ['Draw it | Use pencil or pen', 'Paint it | Use color', 'Make a collage | Tear and glue', 'Sculpt it | Use clay or foil', 'Make a digital image | Use a drawing app', 'Describe it in words | Say or write about it'],
+    support: ['Reference photo | Look at one first', 'Step-by-step card | Follow the steps', 'Grid paper | Use it as a guide', 'Stencil or tracing | Use it as a guide', 'Color wheel | Check it as you mix', 'Sketch first | Plan in pencil', 'Pre-cut pieces | Start with cut shapes', 'Timer | Watch the time']
+  };
+
+  SUBJECTS.music = {
+    label: 'Music',
+    task: [
+      'Clap the Beat | Clap a steady beat for 30 seconds. Then clap a rhythm on top of it.',
+      'Rhythm Writer | Write a 4-beat rhythm with long and short sounds. Play it.',
+      'Listening Log | Listen to a piece. Write 3 words that describe it and the instruments you hear.',
+      'Create a Melody | Make up a short melody of 8 notes. Play or hum it and write it down.',
+      'Instrument Families | Sort 8 instruments into strings, woodwinds, brass, and percussion.',
+      'Tempo Challenge | Perform the same rhythm slow, medium, and fast.',
+      'Dynamics Practice | Sing or play a phrase quietly, then loudly, then getting louder.',
+      'Body Percussion | Make a 4-part pattern with claps, taps, and stomps. Teach it.',
+      'Lyric Writing | Write 4 lines about something you care about. Keep a rhythm or rhyme.',
+      'Compare Two Pieces | Listen to two pieces. Tell how they are alike and different.',
+      'Note Names | Name 8 notes on a staff or a keyboard. Check your answers.',
+      'Sound Scavenger | Find 5 things that make sounds. Sort them from high to low.',
+      'Practice Plan | Plan 10 minutes of practice. List what you will work on.',
+      'Mood Music | Pick a feeling. Describe what kind of music would match it and why.',
+      'Call and Response | Make a call and response with a partner using voices or instruments.',
+      'Rests and Silence | Add rests to a rhythm. Notice how silence changes the music.',
+      'Build a Beat | Use objects to make a beat with two different sounds.',
+      'Music Around the World | Pick a place. Learn one fact about its music and share it.',
+      'Perform and Reflect | Perform something you practiced. Write what went well and what to work on.',
+      'Quick Composer | Combine a rhythm and a melody. Give your piece a name.'
+    ],
+    focus: [
+      'Beat | The steady pulse',
+      'Rhythm | Long and short sounds',
+      'Melody | The tune',
+      'Harmony | Sounds together',
+      'Tempo | How fast or slow',
+      'Dynamics | How loud or soft',
+      'Pitch | How high or low',
+      'Form | How a piece is organized',
+      'Tone color | The sound of an instrument or voice',
+      'Notation | Reading and writing music',
+      'Listening | Hearing details',
+      'Performance | Sharing music with others'
+    ],
+    show: ['Play it | Use an instrument', 'Sing it | Use your voice', 'Clap it | Use your body', 'Write it | Use notes or symbols', 'Say it out loud | Explain it', 'Move to it | Show the beat with your body'],
+    support: ['Rhythm cards | Picture beats', 'Color-coded notes | Match colors to notes', 'Listening example | Hear it first', 'Lyric sheet | Read the words', 'Practice track | Play along', 'Keyboard chart | A note guide', 'Partner help | Work with a buddy', 'Timer | Watch the time']
+  };
   function scale(pts, c, k) {
     return pts.map(function (p) { return [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k]; });
   }
@@ -537,7 +752,7 @@ body { margin: 0; }
   };
 
 
-  var state = { subject: 'ela', nextId: 1, dice: [], hist: [], editing: null, size: '1', space: false, locked: false, ph: '', cfgId: '' };
+  var state = { subject: 'ela', nextId: 1, dice: [], hist: [], editing: null, size: '1', space: false, locked: false, subjLocked: false, ph: '', cfgId: '' };
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -601,7 +816,7 @@ body { margin: 0; }
   }
   function configObject() {
     return {
-      v: 1, subject: state.subject, locked: state.locked, ph: state.ph,
+      v: 1, subject: state.subject, locked: state.locked, sl: state.subjLocked, ph: state.ph,
       dice: state.dice.map(function (d) { return { sides: d.sides, type: d.type, name: d.name, on: d.on, hue: d.hue, start: d.start, step: d.step, faces: d.faces }; })
     };
   }
@@ -614,6 +829,7 @@ body { margin: 0; }
     state.nextId = out.length + 1;
     if (SUBJECT_KEYS.indexOf(c.subject) > -1) state.subject = c.subject;
     state.locked = c.locked === true;
+    state.subjLocked = state.locked && c.sl === true;
     state.ph = typeof c.ph === 'string' ? c.ph.slice(0, 16) : '';
     state.editing = null;
     return true;
@@ -648,11 +864,12 @@ body { margin: 0; }
     return false;
   }
 
-  function faceKey(d) { return d.type + (TYPE_BY[d.type].subj ? ':' + state.subject : '') + ':' + d.sides; }
+  function faceKey(d) { return d.type + ((TYPE_BY[d.type].subj || SUBJECTS[state.subject][d.type]) ? ':' + state.subject : '') + ':' + d.sides; }
   function defaultFaces(d) {
     var src = null;
     if (d.type === 'task') src = SUBJECTS[state.subject].task;
     else if (d.type === 'focus') src = SUBJECTS[state.subject].focus;
+    else if (SUBJECTS[state.subject][d.type]) src = SUBJECTS[state.subject][d.type];
     else if (GENERIC[d.type]) src = GENERIC[d.type];
     var out = [];
     for (var i = 0; i < d.sides; i++) out.push(src ? src[Math.floor(i * src.length / d.sides)] : 'Option ' + (i + 1));
@@ -784,7 +1001,7 @@ body { margin: 0; }
     if (t.kind === 'text') {
       var faces = getFaces(d);
       html += '<p class="ed-note">Edit any face. Type a bar to add a note after the name, like Garter | Knit every row.' +
-        (t.subj ? ' These change with the subject, so each subject keeps its own edits.' : '') + '</p><div class="faces-in">' +
+        ((t.subj || SUBJECTS[state.subject][d.type]) ? ' These change with the subject, so each subject keeps its own edits.' : '') + '</p><div class="faces-in">' +
         faces.map(function (f, i) {
           return '<label class="face-in"><span class="n">' + (i + 1) + '</span><input type="text" id="ed-face-' + (i + 1) + '" data-face="' + (i + 1) + '" maxlength="80" value="' + esc(f) + '"></label>';
         }).join('') + '</div>';
@@ -1147,12 +1364,13 @@ body { margin: 0; }
   function renderTeacher() {
     var h;
     if (state.locked) {
-      h = '<p class="t-note">Die settings are locked. Students can still roll the dice, change the subject, and change the text size.</p>' +
+      h = '<p class="t-note">Die settings are locked. Students can still roll the dice' + (state.subjLocked ? ' and change the text size. The subject is locked to ' + esc(SUBJECTS[state.subject].label) + '.' : ', change the subject, and change the text size.') + '</p>' +
         (state.ph ? '<label class="field"><span>Passcode</span><input type="password" id="unlock-pass" autocomplete="off" maxlength="12"></label>' : '') +
         '<div class="t-btns"><button type="button" class="ghost" id="unlock-btn">Unlock die settings</button></div>';
     } else {
       h = '<p class="t-note">Set up the dice the way you want. Then lock the settings before you share the page. You can also leave them unlocked.</p>' +
         '<label class="field"><span>Passcode (optional)</span><input type="password" id="lock-pass" autocomplete="off" maxlength="12" placeholder="Up to 12 characters"></label>' +
+        '<label class="row"><input type="checkbox" id="lock-subj"><span>Also lock the subject, so students see only ' + esc(SUBJECTS[state.subject].label) + '</span></label>' +
         '<div class="t-btns"><button type="button" class="ghost" id="lock-btn">Lock die settings</button></div>' +
         '<p class="t-note">A passcode stops students from unlocking by accident. It is not strong security.</p>';
     }
@@ -1169,6 +1387,10 @@ body { margin: 0; }
   }
   function renderLockState() {
     appEl.setAttribute('data-locked', String(state.locked));
+    $('subject').hidden = state.subjLocked;
+    var sn = $('subject-name');
+    sn.hidden = !state.subjLocked;
+    sn.textContent = SUBJECTS[state.subject].label;
     hintEl.textContent = state.locked ? HINT_LOCKED : HINT_OPEN;
     summaryEl.textContent = state.locked ? 'Teacher tools (locked)' : 'Teacher tools';
     renderTeacher();
@@ -1182,12 +1404,13 @@ body { margin: 0; }
       var p = ($('lock-pass').value || '').trim().slice(0, 12);
       state.ph = p ? hashStr('cd1:' + p) : '';
       state.locked = true; state.editing = null;
+      state.subjLocked = !!($('lock-subj') && $('lock-subj').checked);
       save(); refreshAll();
       say(p ? 'Locked with your passcode.' : 'Locked with no passcode.');
     } else if (id === 'unlock-btn') {
       var el = $('unlock-pass'), entered = el ? el.value.trim() : '';
       if (state.ph && hashStr('cd1:' + entered) !== state.ph) { say('That passcode does not match.'); return; }
-      state.locked = false; state.ph = '';
+      state.locked = false; state.subjLocked = false; state.ph = '';
       save(); refreshAll();
       say('Unlocked.');
     } else if (id === 'copy-link') {
@@ -1220,6 +1443,9 @@ body { margin: 0; }
     try { var m = /^#d=([A-Za-z0-9_-]+)$/.exec(location.hash); if (m) hashCode = m[1]; } catch (e) { hashCode = null; }
     var incoming = hashCode || (typeof BAKED_CONFIG === 'string' && BAKED_CONFIG ? BAKED_CONFIG : null);
     if (!load(incoming)) defaultSet();
+    $('subject').innerHTML = '<legend class="sr">Subject</legend>' + SUBJECT_KEYS.map(function (k) {
+      return '<label><input type="radio" name="subject" value="' + k + '"><span>' + esc(SUBJECTS[k].label) + '</span></label>';
+    }).join('');
     state.dice.forEach(function (d) { d.result = rnd(d.sides); });
     Array.prototype.forEach.call(document.querySelectorAll('input[name="subject"]'), function (r) { r.checked = r.value === state.subject; });
     applyPrefs();

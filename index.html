@@ -260,6 +260,21 @@ ol.prows .rt { min-width: 0; overflow-wrap: anywhere; }
 body[data-space="wide"] { line-height: 1.75; letter-spacing: 0.02em; word-spacing: 0.1em; }
 .die-btn.flat { padding-top: 14px; }
 #app[data-locked="true"] .tool-btns:not(.card-tools) { display: none; }
+#app[data-locked="true"] #lesson { display: none; }
+.pattern .ican { font-size: 0.95rem; font-weight: 650; color: var(--muted); }
+.lp-part { display: grid; gap: 4px; padding: 10px 0; border-top: 1px solid var(--line); }
+.lp-part:first-child { border-top: 0; padding-top: 0; }
+.lp-part h3 { margin: 0; font-size: 0.95rem; }
+.lp-part dl { margin: 0; display: grid; gap: 3px; }
+.lp-part dl div { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr); gap: 2px 12px; font-size: 0.875rem; line-height: 1.45; }
+.lp-part dt { color: var(--muted); }
+.lp-part dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.lp-part .same dd { color: var(--muted); }
+@media (max-width: 520px) { .lp-part dl div { grid-template-columns: minmax(0, 1fr); } .lp-part dd { padding-bottom: 4px; } }
+details.parts { background: var(--bg); }
+.t-body textarea { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-height: 96px; width: 100%; min-width: 0; resize: vertical; }
+details.parts .t-body input[type="text"], details.parts .t-body textarea { background: var(--surface); }
+.t-body textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 .pattern .dir { font-size: 1.1rem; line-height: 1.6; font-weight: 600; max-width: 58ch; }
 .pattern .plan { font-size: 1.05rem; line-height: 1.6; max-width: 58ch; }
 .timer { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed var(--line); }
@@ -338,6 +353,19 @@ body { margin: 0; }
     <div class="pattern" id="taskcard"></div>
   </section>
 
+  <details class="lesson" id="lesson" open>
+    <summary>Lesson plan in brief <span class="sub">for the teacher</span></summary>
+    <div class="t-body">
+      <p class="t-note">Each roll also makes a short plan in the Lesson Builder order. Students do not see it once you lock the dice. Copy it, then paste each line into the matching Lesson Builder box.</p>
+      <div id="lp"></div>
+      <div class="t-btns"><button type="button" class="ghost" id="lp-copy">Copy lesson plan</button></div>
+      <details class="parts" id="parts">
+        <summary>Parts that stay the same</summary>
+        <div class="t-body" id="parts-body"></div>
+      </details>
+    </div>
+  </details>
+
   <section class="block" aria-labelledby="hist-h">
     <div class="block-head">
       <h2 id="hist-h">Recent rolls</h2>
@@ -372,7 +400,7 @@ body { margin: 0; }
   var SIDES = [4, 6, 8, 10, 12, 20];
   var MAX_DICE = 8;
   var HUES = ['--h-d10', '--h-d12', '--h-d8', '--h-d6', '--h-d4', '--h-d20', '--h-x1', '--h-x2'];
-  var SUBJECT_KEYS = ['ela', 'math', 'science', 'social', 'study', 'pe', 'art', 'music'];
+  var SUBJECT_KEYS = ['ela', 'math', 'science', 'social', 'language', 'tech', 'health', 'study', 'pe', 'art', 'music'];
 
   // Faces are written as "Name | note". The note part is optional. All ideas are original.
   var SUBJECTS = {
@@ -495,9 +523,9 @@ body { margin: 0; }
     }
   };
 
-  var GROUP = ['On your own | Work independently', 'With a partner | Take turns', 'In a small group | Share jobs', 'With the teacher | Check in as you go'];
+  var GROUP = ['On your own | Table 2: quiet work', 'With a partner | Table 1: group work', 'In a small group | Table 1: group work', 'With the teacher | Tables 3-10: asking for help'];
   var SHOW = ['Write it | Sentences or a list', 'Draw it | A picture with labels', 'Say it out loud | Explain to someone', 'Make a poster | Words and pictures', 'Act it out | Show the steps', 'Build a model | Use materials you have'];
-  var SUPPORT = ['Word bank | List the key words first', 'Sentence starters | Use them to begin', 'Graphic organizer | Fill in the boxes', 'Checklist | Check off each step', 'Worked example | Look at one first', 'Calculator or chart | Use it to check', 'Read aloud | Listen as you go', 'Timer | Watch the time'];
+  var SUPPORT = ['Read aloud | Listen to the text as you go', 'Fewer, same skill | Do the odd ones: 1, 3, 5', 'Sentence starters | Use them to begin each answer', 'Picture or model | Use a drawing or number line', 'Chart or calculator | Use it to check', 'Short parts | Read a little, then answer a question', 'Word bank | List the key words first', 'Extra time | Take your time and check in halfway'];
   var BONUS = ['Brain break first | Stretch for one minute', 'Bonus challenge | Add one harder example', 'Teach someone | Explain it to a friend or family member', 'Use color | Color-code your work', 'Check twice | Look over your work before you turn it in', 'Add a picture | Draw something that helps', 'Make a goal | Say what you want to finish', 'Celebrate | Do a quick cheer when you finish', 'Try a new tool | Pick one you do not usually use', 'Start with what you know | Write it down first', 'Make it neat | Slow down and use your best handwriting', 'Pick a song | Hum a tune to help you remember'];
 
   var TYPES = [
@@ -729,6 +757,316 @@ body { margin: 0; }
     show: ['Play it | Use an instrument', 'Sing it | Use your voice', 'Clap it | Use your body', 'Write it | Use notes or symbols', 'Say it out loud | Explain it', 'Move to it | Show the beat with your body'],
     support: ['Rhythm cards | Picture beats', 'Color-coded notes | Match colors to notes', 'Listening example | Hear it first', 'Lyric sheet | Read the words', 'Practice track | Play along', 'Keyboard chart | A note guide', 'Partner help | Work with a buddy', 'Timer | Watch the time']
   };
+
+  SUBJECTS.tech = {
+    label: 'Tech',
+    task: [
+      'Algorithm Cards | Write the steps to make a sandwich. Swap with a partner and follow each other’s steps.',
+      'Debug It | Find the mistake in a short set of steps. Fix it and explain what was wrong.',
+      'Loop It | Find a pattern that repeats in a task. Write it as a loop, like “repeat 4 times.”',
+      'If This, Then That | Write 3 if-then rules for a game or a daily routine.',
+      'Typing Practice | Practice typing for 5 minutes. Write your speed and one thing to improve.',
+      'Strong Password Tips | Write 3 tips for a strong password. Do not write a real password.',
+      'Digital Citizenship | List 3 ways to be kind and safe online. Explain each one.',
+      'Search Smart | Search for an answer using 3 different sets of keywords. Write which worked best.',
+      'Source Check | Pick a website. Check who made it, when, and why. Decide if you can trust it.',
+      'Slide Plan | Plan 4 slides on a topic. Sketch each one.',
+      'Block Code Story | Use a block coding tool to make a character move 3 times. Describe what you built.',
+      'Draw With Steps | Write steps to draw a square and then a triangle on grid paper. Test them.',
+      'Unplugged Robot | Give your partner steps to cross the room. Fix the steps if they bump into something.',
+      'Keyboard Shortcuts | Learn 3 shortcuts. Use each one and write what it does.',
+      'File Organizer | Name and sort 6 files into folders. Use clear names.',
+      'Spreadsheet Basics | Make a table with 5 rows. Add a total with a formula.',
+      'Design an App Screen | Sketch a screen for an app that helps students. Label the buttons.',
+      'Tech Problem Solver | Write what to try first when a device stops working. Put the steps in order.',
+      'Quick Survey | Ask 10 people one quick question without writing names. Make a chart.',
+      'Tech Reflection | Write one way technology helped you this week and one limit it has.'
+    ],
+    focus: [
+      'Algorithms | Steps in order',
+      'Debugging | Finding and fixing mistakes',
+      'Loops | Repeating steps',
+      'Conditions | If this, then that',
+      'Variables | Names that hold a value',
+      'Digital citizenship | Being kind and safe online',
+      'Online safety | Protecting yourself and others',
+      'Research skills | Finding good information',
+      'Typing | Speed and accuracy',
+      'Spreadsheets | Tables and formulas',
+      'File management | Names and folders',
+      'Design thinking | Plan, build, test, improve'
+    ],
+    show: ['Write it | Steps or a list', 'Draw it | A diagram or sketch', 'Say it out loud | Explain to someone', 'Build it on screen | Use a tool', 'Act it out | Be the computer', 'Make a chart | Show the data'],
+    support: ['Word bank | List the key words first', 'Step-by-step card | Follow the steps', 'Checklist | Check off each step', 'Worked example | Look at one first', 'Keyboard map | See where keys are', 'Partner help | Work with a buddy', 'Unplugged option | Use paper instead', 'Timer | Watch the time']
+  };
+
+  SUBJECTS.language = {
+    label: 'World Language',
+    task: [
+      'Greetings Practice | Greet a partner and ask how they are in your new language. Switch roles.',
+      'Vocabulary Cards | Make 6 cards. Put the new word on one side and a picture on the other.',
+      'Label the Room | Label 8 things around you in your new language.',
+      'Number Practice | Say the numbers 1 to 20. Then write 5 of them.',
+      'Describe a Character | Write 3 sentences about a made-up character. Include a name and what they like.',
+      'Mini Dialogue | Write a 4-line conversation. Read it with a partner.',
+      'Listen and Draw | Listen to 4 short sentences. Draw what you hear.',
+      'Cognate Hunt | Find 5 words that look or sound like English words. Write what they mean.',
+      'Culture Spotlight | Learn one fact about a place where the language is spoken. Share it.',
+      'Weather Report | Say or write today’s weather in your new language.',
+      'Days and Months | Say the days of the week. Write 5 months.',
+      'Menu Maker | Make a menu with 5 foods and prices.',
+      'Chant It | Learn a short chant or rhyme your teacher gives you. Say it twice.',
+      'Question Words | Learn 4 question words. Ask a partner a question with each one.',
+      'Color and Count | Describe 3 objects by color and number.',
+      'Sentence Builder | Build 5 sentences from a word bank. Say each one out loud.',
+      'Picture Dictionary | Make a page of 8 pictures with their words.',
+      'Charades | Act out a word. Your partner says it in your new language.',
+      'Translate and Check | Write 3 short sentences in English. Translate them and check with a resource.',
+      'Reflection | Write one thing you can say now that you could not say before.'
+    ],
+    focus: [
+      'Greetings | Hello and goodbye',
+      'Numbers | Counting and saying them',
+      'Colors | Naming and describing',
+      'People and family | Who is who',
+      'Food | Eating and ordering',
+      'School | Things and places',
+      'Days and months | Time on the calendar',
+      'Weather | Describing the day',
+      'Questions | Asking and answering',
+      'Verbs | Action words',
+      'Culture | Traditions and places',
+      'Listening and speaking | Using the language out loud'
+    ],
+    show: ['Say it out loud | Speak the words', 'Write it | Words or sentences', 'Draw it | A picture with words', 'Act it out | Use movement', 'Make cards | Word and picture', 'Role-play with a partner | Take turns'],
+    support: ['Word bank | List the key words first', 'Picture cards | Match words to images', 'Sentence starters | Use them to begin', 'Audio example | Hear it first', 'Translation tool | Check your work', 'Partner help | Work with a buddy', 'Phrase sheet | Common phrases', 'Timer | Watch the time']
+  };
+
+  SUBJECTS.health = {
+    label: 'Health',
+    task: [
+      'Plate Plan | Draw a plate with healthy foods from each food group.',
+      'Sleep Check | Write how much sleep you need and 3 habits that help you sleep.',
+      'Feeling Words | List 8 feeling words. Match each to a time you might feel it.',
+      'Calm Toolkit | List 5 ways to calm down. Pick your top 2 and say why they help.',
+      'Handwashing Steps | Write the steps for washing your hands. Put them in order.',
+      'Label Detective | Look at a food label. Find the serving size, the sugar, and one other fact.',
+      'Kind Words | Write 3 kind things you could say to a friend.',
+      'Safety Rules | List 3 safety rules for home and one for outside.',
+      'Habit Tracker | Track one healthy habit for 3 days. Write what you notice.',
+      'Trusted Adults | Write who your trusted adults are and when to ask them for help.',
+      'Screen Balance | Plan a day with screen time and non-screen time.',
+      'Stress Spotter | List 3 signs your body gives when you feel stressed.',
+      'Water Goal | Set a water goal for tomorrow and track it.',
+      'Good Friend Check | Describe what a good friend does and what a good friend does not do.',
+      'Say No Kindly | Write a polite way to say no to something that does not feel right.',
+      'First Aid Basics | Write what to do for a small cut. Put the steps in order.',
+      'Day in Feelings | Draw or write about how your day felt.',
+      'Snack Ideas | List 5 snacks. Name the food group for each.',
+      'Body Systems Poster | Make a poster of one body system and what it does.',
+      'Reflection | Write one healthy choice you made and what helped.'
+    ],
+    focus: [
+      'Nutrition | Food for your body',
+      'Sleep | Rest and routines',
+      'Feelings | Naming how you feel',
+      'Calming down | Tools for big feelings',
+      'Hygiene | Staying clean',
+      'Safety | At home, school, and outside',
+      'Friendships | Being a good friend',
+      'Asking for help | Who to tell and when',
+      'Screen time | Balance with other activities',
+      'Movement | Being active',
+      'Stress | Noticing and managing it',
+      'Body systems | How your body works'
+    ],
+    show: ['Write it | Sentences or a list', 'Draw it | A picture with labels', 'Say it out loud | Explain to someone', 'Make a poster | Words and pictures', 'Act it out | Show the steps', 'Make a chart | Track it'],
+    support: ['Word bank | List the key words first', 'Sentence starters | Use them to begin', 'Graphic organizer | Fill in the boxes', 'Checklist | Check off each step', 'Picture cards | Match words to images', 'Worked example | Look at one first', 'Trusted adult check-in | Ask for help', 'Timer | Watch the time']
+  };
+  // Lesson Builder alignment (kept out of sight for students). Each skill focus has a
+  // 6th grade standard and an "I can" statement, written "Standard | I can ...".
+  // A face the teacher rewrites has no match, so the plan falls back to plain wording.
+  // The standard codes are a starting point: check them against your own pacing guide.
+  var ALIGN = {
+    ela: {
+      'Main idea': 'RI.6.2 | I can find the main idea and the details that support it.',
+      'Theme': 'RL.6.2 | I can find the theme of a story and the details that show it.',
+      'Vocabulary': 'L.6.4 | I can use clues to figure out what a word means.',
+      'Text evidence': 'RL.6.1 | I can use a quote from the text to back up my answer.',
+      'Character': 'RL.6.3 | I can describe how a character changes and why.',
+      'Setting': 'RL.6.3 | I can explain how the setting shapes the story.',
+      'Plot': 'RL.6.3 | I can tell the main events of a story in order.',
+      'Point of view': 'RL.6.6 | I can explain who is telling the story and how that changes it.',
+      'Inference': 'RL.6.1 | I can use clues and what I know to figure out what the text suggests.',
+      'Author’s purpose': 'RI.6.6 | I can explain why the author wrote the text.',
+      'Figurative language': 'L.6.5 | I can explain what a simile or metaphor means.',
+      'Writing conventions': 'L.6.2 | I can use capitals, punctuation, and spelling correctly.'
+    },
+    math: {
+      'Ratios': '6.RP.A.1 | I can write a ratio to compare two amounts.',
+      'Unit rates': '6.RP.A.2 | I can find the amount for one.',
+      'Percents': '6.RP.A.3c | I can find a percent of a number.',
+      'Fraction division': '6.NS.A.1 | I can divide fractions and explain my steps.',
+      'Decimals': '6.NS.B.3 | I can add, subtract, multiply, and divide decimals.',
+      'Integers': '6.NS.C.5 | I can use positive and negative numbers to show real amounts.',
+      'Expressions': '6.EE.A.2 | I can write and read expressions with variables.',
+      'Equations': '6.EE.B.7 | I can solve one-step equations.',
+      'Area and volume': '6.G.A.1 | I can find the area of shapes and the volume of boxes.',
+      'Coordinate plane': '6.NS.C.8 | I can plot points on a coordinate plane.',
+      'Data and graphs': '6.SP.B.5 | I can find the mean and median of a data set.',
+      'Factors and multiples': '6.NS.B.4 | I can find the GCF and LCM of two numbers.'
+    },
+    science: {
+      'Scientific questions': 'NGSS SEP 1 | I can ask a question that I can test.',
+      'Data and evidence': 'NGSS SEP 4 | I can use data to back up an idea.',
+      'Cells': 'MS-LS1-1 | I can explain that living things are made of cells.',
+      'Ecosystems': 'MS-LS2-1 | I can explain how living things depend on their ecosystem.',
+      'Matter': 'MS-PS1-1 | I can describe what matter is made of.',
+      'Energy': 'MS-PS3-3 | I can explain how energy moves and changes.',
+      'Forces and motion': 'MS-PS2-2 | I can explain how pushes and pulls change motion.',
+      'Waves and light': 'MS-PS4-2 | I can describe how light and sound travel as waves.',
+      'Weather and climate': 'MS-ESS2-5 | I can explain how air and water make weather.',
+      'Earth’s surface': 'MS-ESS2-2 | I can explain how Earth’s surface changes over time.',
+      'Space': 'MS-ESS1-1 | I can describe patterns of the Sun, Moon, and planets.',
+      'Engineering design': 'MS-ETS1-1 | I can plan a way to solve a problem step by step.'
+    },
+    social: {
+      'Timelines': 'HSS CST 1 | I can put events in order on a timeline.',
+      'Maps and geography': 'HSS CST 3 | I can use a map to explain where and why people lived.',
+      'Early peoples': 'HSS 6.1 | I can describe how early people lived.',
+      'Civilizations': 'HSS 6.2 | I can explain what makes a civilization.',
+      'Government': 'HSS 6.4 | I can explain how a group makes decisions.',
+      'Trade and money': 'HSS HI 6 | I can explain how people trade goods.',
+      'Culture and belief': 'HSS 6.3 | I can describe traditions and beliefs of a culture.',
+      'Primary sources': 'HSS REPV 4 | I can use a source from the time as evidence.',
+      'Cause and effect': 'HSS HI 2 | I can explain why an event happened and what it caused.',
+      'Rights and responsibilities': 'HSS 6.4 | I can explain what citizens owe each other.',
+      'Points of view': 'HSS HI 5 | I can compare two points of view about an event.',
+      'Current events': 'HSS REPV 1 | I can ask good questions about a news event.'
+    },
+    language: {
+      'Greetings': 'WL Interpersonal | I can greet someone and say goodbye.',
+      'Numbers': 'WL Presentational | I can count and say numbers.',
+      'Colors': 'WL Presentational | I can name and describe colors.',
+      'People and family': 'WL Presentational | I can talk about my family and friends.',
+      'Food': 'WL Interpersonal | I can ask for and order food.',
+      'School': 'WL Interpretive | I can understand words for school things and places.',
+      'Days and months': 'WL Interpretive | I can understand days and months on a calendar.',
+      'Weather': 'WL Presentational | I can describe the weather.',
+      'Questions': 'WL Interpersonal | I can ask and answer simple questions.',
+      'Verbs': 'WL Presentational | I can use action words in a sentence.',
+      'Culture': 'WL Cultures | I can describe a tradition from another culture.',
+      'Listening and speaking': 'WL Interpretive | I can listen and answer out loud.'
+    },
+    tech: {
+      'Algorithms': 'CSTA 2-AP-10 | I can write clear steps in order.',
+      'Debugging': 'CSTA 2-AP-17 | I can find and fix a mistake in steps.',
+      'Loops': 'CSTA 2-AP-12 | I can use a loop to repeat steps.',
+      'Conditions': 'CSTA 2-AP-12 | I can write an if-then rule.',
+      'Variables': 'CSTA 2-AP-11 | I can use a name to hold a value.',
+      'Digital citizenship': 'ISTE 1.2 | I can be kind and safe online.',
+      'Online safety': 'CSTA 2-NI-05 | I can protect my information online.',
+      'Research skills': 'ISTE 1.3 | I can find and check good information.',
+      'Typing': 'ISTE 1.1 | I can type with speed and accuracy.',
+      'Spreadsheets': 'CSTA 2-DA-07 | I can organize data in a table.',
+      'File management': 'ISTE 1.1 | I can name and sort my files.',
+      'Design thinking': 'ISTE 1.4 | I can plan, build, test, and improve an idea.'
+    },
+    health: {
+      'Nutrition': 'NHES 1 | I can explain how food helps my body.',
+      'Sleep': 'NHES 7 | I can plan a healthy sleep routine.',
+      'Feelings': 'NHES 4 | I can name how I feel.',
+      'Calming down': 'NHES 7 | I can use a tool to calm down.',
+      'Hygiene': 'NHES 7 | I can explain how to stay clean and healthy.',
+      'Safety': 'NHES 5 | I can make a safe choice.',
+      'Friendships': 'NHES 4 | I can show how to be a good friend.',
+      'Asking for help': 'NHES 3 | I can name who to ask for help and when.',
+      'Screen time': 'NHES 6 | I can set a goal for screen time.',
+      'Movement': 'NHES 6 | I can plan ways to be active.',
+      'Stress': 'NHES 7 | I can notice stress and handle it.',
+      'Body systems': 'NHES 1 | I can explain how a body system works.'
+    },
+    study: {
+      'Time': 'ASCA B-LS 3 | I can plan how to use my time.',
+      'Organization': 'ASCA B-LS 3 | I can keep my work where I can find it.',
+      'Note-taking': 'ASCA B-LS 3 | I can write down the key ideas.',
+      'Memory': 'ASCA B-LS 3 | I can use a trick to remember facts.',
+      'Focus': 'ASCA B-SMS 2 | I can stay on one task.',
+      'Test prep': 'ASCA B-LS 3 | I can get ready to show what I know.',
+      'Reading': 'ASCA B-LS 1 | I can check that I understand what I read.',
+      'Goals': 'ASCA B-LS 7 | I can set a goal and plan the steps.',
+      'Asking for help': 'ASCA B-SS 3 | I can ask for help when I am stuck.',
+      'Self-checking': 'ASCA B-SMS 1 | I can look over my own work.',
+      'Effort': 'ASCA B-SMS 6 | I can keep trying when it is hard.',
+      'Staying calm': 'ASCA B-SMS 7 | I can use a tool to stay calm.'
+    },
+    pe: {
+      'Heart and lungs': 'SHAPE S3 | I can move to raise my heart rate.',
+      'Strength': 'SHAPE S3 | I can do moves that build strength.',
+      'Flexibility': 'SHAPE S3 | I can stretch safely.',
+      'Balance': 'SHAPE S1 | I can stay steady while I move.',
+      'Coordination': 'SHAPE S1 | I can move body parts together.',
+      'Teamwork': 'SHAPE S4 | I can work well with others.',
+      'Sportsmanship': 'SHAPE S4 | I can play fair and be kind.',
+      'Warm-up and cool-down': 'SHAPE S3 | I can warm up and cool down.',
+      'Pulse and effort': 'SHAPE S3 | I can notice how hard I am working.',
+      'Goal setting': 'SHAPE S3 | I can set and track a fitness goal.',
+      'Healthy habits': 'SHAPE S3 | I can name habits that keep me healthy.',
+      'Rules and safety': 'SHAPE S4 | I can follow rules that keep everyone safe.'
+    },
+    art: {
+      'Line': 'VA:Cr2.1.6a | I can use lines to show movement.',
+      'Shape': 'VA:Cr2.1.6a | I can use shapes in my art.',
+      'Color': 'VA:Cr2.1.6a | I can mix colors to show a mood.',
+      'Value': 'VA:Cr2.1.6a | I can use light and dark.',
+      'Texture': 'VA:Cr2.1.6a | I can show how a surface feels.',
+      'Form': 'VA:Cr2.1.6a | I can make a shape look 3D.',
+      'Space': 'VA:Cr2.1.6a | I can show near and far.',
+      'Pattern': 'VA:Cr2.1.6a | I can make a pattern with repeating parts.',
+      'Balance': 'VA:Re8.1.6a | I can explain how a picture is balanced.',
+      'Contrast': 'VA:Re8.1.6a | I can use strong differences to stand out.',
+      'Movement': 'VA:Re8.1.6a | I can lead the eye through a picture.',
+      'Composition': 'VA:Cr1.2.6a | I can plan how to arrange my art.'
+    },
+    music: {
+      'Beat': 'MU:Pr4.2.6a | I can keep a steady beat.',
+      'Rhythm': 'MU:Pr4.2.6a | I can clap long and short sounds.',
+      'Melody': 'MU:Pr4.2.6a | I can follow a tune.',
+      'Harmony': 'MU:Pr4.2.6a | I can hear sounds that go together.',
+      'Tempo': 'MU:Pr4.3.6a | I can show fast and slow.',
+      'Dynamics': 'MU:Pr4.3.6a | I can show loud and soft.',
+      'Pitch': 'MU:Pr4.2.6a | I can hear high and low.',
+      'Form': 'MU:Re7.2.6a | I can explain how a piece is organized.',
+      'Tone color': 'MU:Re7.2.6a | I can name an instrument by its sound.',
+      'Notation': 'MU:Pr4.2.6a | I can read and write simple notes.',
+      'Listening': 'MU:Re7.2.6a | I can hear and describe details in music.',
+      'Performance': 'MU:Pr6.1.6a | I can share music with others.'
+    }
+  };
+  // Teacher wording for the generic supports, from the Lesson Builder's adaptation list.
+  var SUPPORT_TEACHER = {
+    'Read aloud': 'Read every text and problem aloud',
+    'Fewer, same skill': 'Fewer problems, same skill (assign 1, 3, 5)',
+    'Sentence starters': 'Sentence frames shown for every answer',
+    'Picture or model': 'Number line or visual model next to each problem',
+    'Chart or calculator': 'Multiplication chart or calculator (if in the IEP)',
+    'Short parts': 'Text chunked into short parts, with a question after each',
+    'Word bank': 'Word bank with today’s vocabulary',
+    'Extra time': 'Extra time and a check-in halfway'
+  };
+  // Lesson plan parts that stay the same from lesson to lesson. The teacher can change them.
+  // The tables wording matches the Lesson Builder.
+  var PLAN_PARTS = [
+    { id: 'welcome', label: 'Inclusive welcome', def: 'Greet each student by name, welcome question in the chat' },
+    { id: 'tools', label: 'Tools and materials', def: 'Notebook, pencil, Classkick link' },
+    { id: 'bear', label: 'B.E.A.R. expectations', def: 'Posted on the opening slide' },
+    { id: 'together', label: 'We Do routine', def: 'Do one together on the shared screen. Students answer in the chat.' },
+    { id: 'tables', label: 'Tables', tall: true, def: 'Table 1: group work\nTable 2: quiet work\nTables 3-10: asking for help\nAt any table, you can set your camera so only the teacher can see you.' },
+    { id: 'check', label: 'How I see each student’s progress', def: 'Classkick, Nearpod, direct chat messages' },
+    { id: 'next', label: 'Next steps slide', def: 'Assignments to complete, sessions to attend' },
+    { id: 'close', label: 'Intentional close', def: 'Exit mood meter or poll' }
+  ];
+
   function scale(pts, c, k) {
     return pts.map(function (p) { return [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k]; });
   }
@@ -752,7 +1090,7 @@ body { margin: 0; }
   };
 
 
-  var state = { subject: 'ela', nextId: 1, dice: [], hist: [], editing: null, size: '1', space: false, locked: false, subjLocked: false, ph: '', cfgId: '' };
+  var state = { subject: 'ela', nextId: 1, dice: [], hist: [], editing: null, size: '1', space: false, locked: false, subjLocked: false, ph: '', cfgId: '', parts: {} };
 
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -843,7 +1181,7 @@ body { margin: 0; }
 
   function save() {
     try {
-      localStorage.setItem(STORE, JSON.stringify({ cfg: configObject(), cfgId: state.cfgId, hist: state.hist, size: state.size, space: state.space }));
+      localStorage.setItem(STORE, JSON.stringify({ cfg: configObject(), cfgId: state.cfgId, hist: state.hist, size: state.size, space: state.space, parts: state.parts }));
     } catch (e) { /* storage unavailable */ }
   }
   // Settings from a shared link or a baked-in code apply once per distinct code. After that the saved copy is used.
@@ -854,6 +1192,7 @@ body { margin: 0; }
       if (Array.isArray(local.hist)) state.hist = local.hist.filter(function (h) { return typeof h === 'string'; }).slice(0, 8);
       if (['1', '1.15', '1.3'].indexOf(local.size) > -1) state.size = local.size;
       state.space = local.space === true;
+      if (local.parts && typeof local.parts === 'object') PLAN_PARTS.forEach(function (p) { if (typeof local.parts[p.id] === 'string') state.parts[p.id] = local.parts[p.id].slice(0, 400); });
     }
     var inc = incomingCode ? parseCode(incomingCode) : null;
     var incId = incomingCode ? hashStr(String(incomingCode).trim().replace(/^.*[#&]d=/, '')) : '';
@@ -1272,50 +1611,146 @@ body { margin: 0; }
       '<div class="tbar" aria-hidden="true"><span id="t-fill"></span></div><p class="t-msg" id="tm-msg" role="status"></p></div>';
   }
 
+  // The first active die of each list type, read once and shared by the task card and the plan.
+  function rolled() {
+    var act = sortedActive(), r = { act: act, extras: [] };
+    act.forEach(function (d) {
+      var e = entry(d, d.result);
+      if (d.type === 'custom') r.extras.push(dieLabel(d) + ': ' + e.value + (e.note ? ' (' + e.note + ')' : '') + '.');
+      else if (!r[d.type]) { r[d.type] = e; r[d.type].die = d; }
+    });
+    var a = r.focus && (ALIGN[state.subject] || {})[r.focus.value];
+    r.std = a ? a.split('|')[0].trim() : '';
+    r.ican = a ? a.split('|')[1].trim() : (r.focus ? 'I can practice ' + lcf(r.focus.value) + '.' : '');
+    return r;
+  }
+  var CAMERA = 'At any table, you can set your camera so only the teacher can see you.';
+
   function writeCard() {
-    var act = sortedActive();
-    if (!act.length) {
+    var r = rolled();
+    writePlan(r);
+    if (!r.act.length) {
       taskText = ''; taskSpeak = '';
       cardEl.innerHTML = '<p class="pnote">Turn on at least one die to build a task card.</p>';
       cardCopy.hidden = true; speakBtn.hidden = true;
       return;
     }
     cardCopy.hidden = false; speakBtn.hidden = !canSpeak;
-    function first(type) { for (var i = 0; i < act.length; i++) if (act[i].type === type) return act[i]; return null; }
-    function val(d) { return d ? entry(d, d.result) : null; }
-    var task = val(first('task')), focus = val(first('focus')), group = val(first('group')), show = val(first('show'));
-    var support = val(first('support')), tm = val(first('minutes')), ct = val(first('count')), bonus = val(first('bonus'));
+    var task = r.task, focus = r.focus, group = r.group, show = r.show, support = r.support, tm = r.minutes, ct = r.count, bonus = r.bonus;
     var mins = tm ? clamp(tm.num, 1, 120) : 10;
 
     var parts = [];
     if (task) parts.push('Work on "' + task.value + '".');
     if (focus) parts.push('Skill focus: ' + lcf(focus.value) + '.');
-    if (group) parts.push('Work ' + lcf(group.value) + '.');
+    if (group) parts.push('Work ' + lcf(group.value) + (group.note ? ' (' + group.note + ')' : '') + '.');
     if (show) parts.push('Show it: ' + lcf(show.value) + '.');
     if (support) parts.push('Support: ' + lcf(support.value) + '.');
     if (tm) parts.push('Work for ' + tm.value + '.');
     if (ct) parts.push('Aim for ' + ct.value + '.');
     if (bonus) parts.push('Bonus: ' + lcf(strip(bonus.value)) + '.');
     var plan = parts.join(' ');
-
-    var extras = [];
-    act.forEach(function (d) {
-      if (d.type !== 'custom') return;
-      var e = entry(d, d.result);
-      extras.push(dieLabel(d) + ': ' + e.value + (e.note ? ' (' + e.note + ')' : '') + '.');
-    });
+    var extras = r.extras.slice();
+    if (group && /table/i.test(group.note)) extras.unshift(CAMERA);
     var title = task ? task.value : 'Your plan';
     var dirs = task && task.note ? task.note : '';
 
     if (timer.from !== mins) { stopTimer(); timer.total = mins * 60; timer.left = timer.total; timer.from = mins; }
 
-    cardEl.innerHTML = '<h3>' + esc(title) + '</h3>' + (dirs ? '<p class="dir">' + esc(dirs) + '</p>' : '') +
+    cardEl.innerHTML = (r.ican ? '<p class="ican">' + esc(r.ican) + '</p>' : '') +
+      '<h3>' + esc(title) + '</h3>' + (dirs ? '<p class="dir">' + esc(dirs) + '</p>' : '') +
       '<p class="plan">' + esc(plan) + '</p>' +
       extras.map(function (x) { return '<p class="pnote">' + esc(x) + '</p>'; }).join('') + timerHTML();
     updateTimerUI();
-    taskText = [title, dirs, '', plan].concat(extras).filter(function (x, i) { return x || i === 2; }).join('\n');
-    taskSpeak = title + '. ' + dirs + ' ' + plan;
+    taskText = [r.ican, title, dirs, '', plan].concat(extras).filter(function (x, i) { return x || i === 3; }).join('\n');
+    taskSpeak = (r.ican ? r.ican + ' ' : '') + title + '. ' + dirs + ' ' + plan;
   }
+
+  // ---------- Lesson plan in brief ----------
+  // Rules only: the six Lesson Builder parts, filled from the roll and the parts that stay the same.
+  // Each line is [box label, text, stays the same?], so the page and the copied text match.
+  function part(id) {
+    var v = state.parts[id];
+    if (typeof v === 'string' && v.trim()) return v.trim();
+    for (var i = 0; i < PLAN_PARTS.length; i++) if (PLAN_PARTS[i].id === id) return PLAN_PARTS[i].def;
+    return '';
+  }
+  // Three activities from the Activity die, spread around its faces, for a "Choose one" board.
+  function choiceBoard(r) {
+    var d = r.task && r.task.die;
+    if (!d || d.sides < 3) return '';
+    var seen = {}, out = [];
+    [0, 1, 2].forEach(function (k) {
+      var n = (d.result - 1 + Math.round(k * d.sides / 3)) % d.sides + 1, e = entry(d, n);
+      if (!seen[e.value]) { seen[e.value] = true; out.push(out.length + 1 + '. ' + e.value); }
+    });
+    return out.join('\n');
+  }
+  function planParts(r) {
+    var f = r.focus ? lcf(r.focus.value) : 'today’s skill';
+    var t = r.task ? r.task.value : 'the activity';
+    var dirs = r.task && r.task.note ? ' ' + r.task.note : '';
+    var sup = r.support ? (SUPPORT_TEACHER[r.support.value] || r.support.value + (r.support.note ? ' (' + r.support.note + ')' : '')) : '';
+    var show = r.show ? lcf(r.show.value) : '';
+    var you = [t + ':' + dirs];
+    if (show) you.push('Show it: ' + show + '.');
+    if (r.count) you.push('Aim for ' + r.count.value + '.');
+    if (r.minutes) you.push('Work for ' + r.minutes.value + '.');
+    if (r.bonus) you.push('Bonus: ' + lcf(strip(r.bonus.value)) + '.');
+    you = you.concat(r.extras);
+    return [
+      ['1. Lesson Prep: Standards and Objectives', [
+        ['"I can" statement', r.ican], ['Standard', r.std]]],
+      ['2. Class Introduction', [
+        ['Inclusive welcome', part('welcome'), true], ['Recording', 'Yes, for learning purposes', true],
+        ['Tools and materials', part('tools'), true],
+        ['Warm-up or spiral review', '2 quick review items that lead into ' + f],
+        ['B.E.A.R. expectations', part('bear'), true]]],
+      ['3. Instruction ("I Do"), 10 to 15 minutes', [
+        ['Vocabulary', r.focus ? r.focus.value + (r.focus.note ? ': ' + r.focus.note : '') : ''],
+        ['Teacher modeling', 'Think aloud as you model ' + t + ' on the shared screen.' + dirs],
+        ['Differentiation and scaffolds', sup]]],
+      ['4. Collaborative Student Practice ("We Do")', [
+        ['What students practice together', t + ': ' + part('together')],
+        ['Collaboration', r.group ? r.group.value + (r.group.note ? ' (' + r.group.note + ')' : '') : '']]],
+      ['5. Independent Student Practice ("You Do")', [
+        ['Independent task', you.join(' ')],
+        ['Tables', part('tables'), true],
+        ['Choice board', choiceBoard(r)],
+        ['How I see each student’s progress', part('check'), true]]],
+      ['6. Wrap Up (Assessment)', [
+        ['Exit ticket', 'One item on ' + f + ' that matches the "I can".' + (show ? ' Show it: ' + show + '.' : '')],
+        ['Next steps slide', part('next'), true], ['Intentional close', part('close'), true]]]
+    ].map(function (p) { return [p[0], p[1].filter(function (l) { return l[1]; })]; });
+  }
+  var planText = '';
+  function writePlan(r) {
+    var parts = planParts(r);
+    lpEl.innerHTML = parts.map(function (p) {
+      return '<div class="lp-part"><h3>' + esc(p[0]) + '</h3><dl>' + p[1].map(function (l) {
+        return '<div' + (l[2] ? ' class="same"' : '') + '><dt>' + esc(l[0]) + '</dt><dd>' + esc(l[1]) + '</dd></div>';
+      }).join('') + '</dl></div>';
+    }).join('');
+    planText = ['Lesson plan from Choice Dice: ' + SUBJECTS[state.subject].label].concat(parts.map(function (p) {
+      return '\n' + p[0] + '\n' + p[1].map(function (l) { return l[0] + ': ' + l[1]; }).join('\n');
+    })).join('\n');
+  }
+  function renderParts() {
+    $('parts-body').innerHTML = '<p class="t-note">These go into every plan. Change them once and they stay in this browser. Leave a box empty to use the starting wording.</p>' +
+      PLAN_PARTS.map(function (p) {
+        var v = esc(state.parts[p.id] || ''), ph = esc(p.def);
+        return '<label class="field"><span>' + esc(p.label) + '</span>' + (p.tall
+          ? '<textarea data-part="' + p.id + '" maxlength="400" placeholder="' + ph + '">' + v + '</textarea>'
+          : '<input type="text" data-part="' + p.id + '" maxlength="400" placeholder="' + ph + '" value="' + v + '">') + '</label>';
+      }).join('');
+  }
+  var lpEl = $('lp');
+  $('lp-copy').addEventListener('click', function (ev) { copyText(planText, ev.currentTarget, 'Copy lesson plan'); });
+  $('parts-body').addEventListener('input', function (ev) {
+    var id = ev.target.getAttribute('data-part');
+    if (!id) return;
+    state.parts[id] = ev.target.value;
+    writePlan(rolled()); save();
+  });
 
   cardEl.addEventListener('click', function (ev) {
     var btn = ev.target.closest('[data-act]');
@@ -1433,8 +1868,8 @@ body { margin: 0; }
         return;
       }
       defaultSet(); state.dice.forEach(function (d) { d.result = rnd(d.sides); });
-      state.hist = []; state.size = '1'; state.space = false; state.cfgId = '';
-      save(); applyPrefs(); refreshAll(); renderHistory();
+      state.hist = []; state.size = '1'; state.space = false; state.cfgId = ''; state.parts = {};
+      save(); applyPrefs(); refreshAll(); renderHistory(); renderParts();
     }
   });
 
@@ -1449,7 +1884,7 @@ body { margin: 0; }
     state.dice.forEach(function (d) { d.result = rnd(d.sides); });
     Array.prototype.forEach.call(document.querySelectorAll('input[name="subject"]'), function (r) { r.checked = r.value === state.subject; });
     applyPrefs();
-    renderTray(); renderEditor(); renderCard(); writeCard(); renderHistory(); renderFaces(); renderLockState();
+    renderParts(); renderTray(); renderEditor(); renderCard(); writeCard(); renderHistory(); renderFaces(); renderLockState();
   }
   init();
 })();

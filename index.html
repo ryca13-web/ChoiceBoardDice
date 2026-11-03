@@ -1,0 +1,1233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Choice Dice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400..800&display=swap">
+<style>
+/* Layout: one narrow column. Subject switch, text-size options, a tray of seven dice (3-up on phones, wider on large screens), a roll button, then the roll list, a task card with a timer, history, face tables and teacher tools. */
+:root {
+  --font-display: "Lexend", "Atkinson Hyperlegible", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Atkinson Hyperlegible", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --bg: #ECEEF5;
+  --surface: #F8F9FD;
+  --ink: #181B2B;
+  --muted: #565C76;
+  --line: #CBD0E1;
+  --btn-bg: #181B2B;
+  --btn-fg: #F8F9FD;
+  --focus: #3A63C2;
+  --h-d4: #7A4CA8;
+  --h-d6: #B97F0A;
+  --h-d8: #23767D;
+  --h-d10: #3B66C4;
+  --h-d12: #BE347A;
+  --h-d20: #55812F;
+  --h-x1: #B8502B;
+  --h-x2: #7C6A58;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11131E;
+    --surface: #1A1D2D;
+    --ink: #ECEEF8;
+    --muted: #A4AAC4;
+    --line: #33385A;
+    --btn-bg: #ECEEF8;
+    --btn-fg: #14172A;
+    --focus: #8FB0FF;
+    --h-d4: #B592E6;
+    --h-d6: #E6B341;
+    --h-d8: #54B7BE;
+    --h-d10: #85A6F2;
+    --h-d12: #EE80B3;
+    --h-d20: #9DCC76;
+    --h-x1: #EE936B;
+    --h-x2: #C3AE96;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11131E;
+  --surface: #1A1D2D;
+  --ink: #ECEEF8;
+  --muted: #A4AAC4;
+  --line: #33385A;
+  --btn-bg: #ECEEF8;
+  --btn-fg: #14172A;
+  --focus: #8FB0FF;
+  --h-d4: #B592E6;
+  --h-d6: #E6B341;
+  --h-d8: #54B7BE;
+  --h-d10: #85A6F2;
+  --h-d12: #EE80B3;
+  --h-d20: #9DCC76;
+    --h-x1: #EE936B;
+    --h-x2: #C3AE96;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 44px;
+}
+button { font: inherit; color: inherit; }
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 22px; }
+.wrap > * { min-width: 0; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+header { display: grid; gap: 8px; }
+h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 10vw, 3.25rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.lede { margin: 0; color: var(--muted); max-width: 46ch; text-wrap: pretty; }
+.stitch-rule { border: 0; border-top: 2px dashed var(--line); margin: 6px 0 0; }
+
+fieldset.seg {
+  margin: 0; min-width: 0; border: 1px solid var(--line); background: var(--surface);
+  border-radius: 12px; padding: 4px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;
+}
+.seg label { position: relative; display: block; }
+.seg input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.seg span {
+  display: block; text-align: center; padding: 11px 6px; border-radius: 8px;
+  font-weight: 600; color: var(--muted);
+}
+.seg input:checked + span { background: var(--btn-bg); color: var(--btn-fg); }
+.seg input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.tray { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.tile { position: relative; display: grid; }
+.die-btn {
+  display: grid; justify-items: center; align-content: start; gap: 6px;
+  width: 100%; padding: 28px 8px 12px; text-align: center; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+}
+.die-btn:hover { border-color: var(--hue); }
+.die-btn:focus-visible, .pool:focus-visible, .roll:focus-visible, .ghost:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--focus); outline-offset: 2px;
+}
+.die { width: min(100%, 88px); aspect-ratio: 1; overflow: visible; }
+.die .body {
+  fill: var(--surface);
+  fill: color-mix(in srgb, var(--hue) 15%, var(--surface));
+  stroke: var(--hue); stroke-width: 3.5; stroke-linejoin: round;
+}
+.die .stitch { fill: none; stroke: var(--hue); stroke-width: 1.6; stroke-dasharray: 3 3.4; stroke-linecap: round; opacity: 0.85; }
+.die .facets line, .die .facets polygon { fill: none; stroke: var(--hue); stroke-width: 1.6; opacity: 0.45; stroke-linecap: round; stroke-linejoin: round; }
+.die .face {
+  fill: var(--ink); font-family: var(--font-display); font-weight: 700; text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke; stroke: var(--surface); stroke: color-mix(in srgb, var(--hue) 15%, var(--surface));
+  stroke-width: 5px; stroke-linejoin: round;
+}
+.tag { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 6px; font-size: 0.6875rem; line-height: 1.2; color: var(--muted); }
+.tag .dn { font-family: var(--font-mono); font-weight: 500; color: var(--ink); }
+.tag .rl { text-transform: uppercase; letter-spacing: 0.07em; }
+.val { font-size: 0.8125rem; line-height: 1.25; font-weight: 600; text-wrap: balance; overflow-wrap: anywhere; }
+.tile[data-on="false"] .die, .tile[data-on="false"] .tag { opacity: 0.4; }
+.tile[data-on="false"] .val { color: var(--muted); font-weight: 400; }
+.tile.rolling .die { animation: tumble 0.46s ease-in-out infinite; transform-origin: 50% 50%; }
+@keyframes tumble {
+  0% { transform: rotate(0) scale(1); }
+  25% { transform: rotate(-14deg) scale(1.07); }
+  50% { transform: rotate(12deg) scale(0.95); }
+  75% { transform: rotate(-8deg) scale(1.04); }
+  100% { transform: rotate(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .tile.rolling .die { animation: none; } }
+
+.pool {
+  position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1.5px solid var(--hue); border-radius: 50%; background: var(--surface);
+}
+.pool::after { content: ""; position: absolute; inset: -8px; }
+.pool svg { width: 14px; height: 14px; opacity: 0; fill: none; stroke: var(--surface); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.pool[aria-pressed="true"] { background: var(--hue); }
+.pool[aria-pressed="true"] svg { opacity: 1; }
+
+.roll {
+  width: 100%; min-height: 58px; border: 0; border-radius: 12px; cursor: pointer;
+  background: var(--btn-bg); color: var(--btn-fg);
+  font-size: 1.15rem; font-weight: 700; letter-spacing: 0.01em;
+}
+.roll:active { transform: translateY(1px); }
+.roll:disabled { opacity: 0.7; cursor: progress; }
+.hint { margin: -10px 0 0; font-size: 0.8125rem; color: var(--muted); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 6px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h2 { margin: 0; font-size: 1.25rem; font-weight: 750; letter-spacing: -0.01em; }
+.ghost {
+  background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px;
+  font-size: 0.8125rem; font-weight: 600; cursor: pointer;
+}
+.ghost:hover { border-color: var(--ink); }
+dl.recipe { margin: 0; display: grid; }
+.rrow {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 2px 14px;
+  padding: 12px 0; border-top: 1px solid var(--line);
+}
+.rrow:first-child { border-top: 0; }
+.rrow dt { display: flex; flex-direction: column; gap: 2px; font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.rrow dt .dn { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: 0; text-transform: none; color: var(--hue); font-weight: 500; }
+.rrow dd { margin: 0; min-width: 0; }
+.rrow .rv { display: block; font-size: 1.3rem; line-height: 1.2; font-weight: 650; text-wrap: balance; }
+.rrow .rn { display: block; margin-top: 3px; font-family: var(--font-mono); font-size: 0.7812rem; color: var(--muted); overflow-wrap: anywhere; }
+.empty { margin: 0; color: var(--muted); padding: 8px 0 4px; }
+
+section.block { display: grid; gap: 8px; }
+.block-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+ul.hist { list-style: none; margin: 0; padding: 0; display: grid; }
+ul.hist li { padding: 9px 0; border-top: 1px solid var(--line); font-family: var(--font-mono); font-size: 0.7812rem; line-height: 1.5; overflow-wrap: anywhere; }
+ul.hist li:first-child { border-top: 0; }
+
+.faces-intro { margin: 0; font-size: 0.875rem; color: var(--muted); max-width: 62ch; text-wrap: pretty; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+summary { cursor: pointer; padding: 13px 14px; font-weight: 650; list-style: none; display: flex; gap: 10px; align-items: baseline; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; margin-left: auto; font-family: var(--font-mono); color: var(--muted); }
+details[open] summary::after { content: "\2212"; }
+summary .dn { font-family: var(--font-mono); font-size: 0.75rem; font-weight: 500; color: var(--hue); }
+summary .sub { font-size: 0.7812rem; font-weight: 400; color: var(--muted); }
+ol.fl { list-style: none; margin: 0; padding: 0 8px 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 0 14px; }
+ol.fl li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 6px; padding: 6px 8px; border-radius: 8px; font-size: 0.875rem; }
+ol.fl .n { font-family: var(--font-mono); font-size: 0.7812rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+ol.fl .ab { font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); }
+ol.fl li.is-current { background: var(--surface); background: color-mix(in srgb, var(--hue) 18%, var(--surface)); font-weight: 650; }
+ol.fl li.is-current .n { color: var(--ink); }
+.pattern { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: grid; gap: 10px; }
+.pattern h3 { margin: 0; font-size: 1.15rem; font-weight: 700; line-height: 1.2; text-wrap: balance; }
+.pattern p { margin: 0; font-size: 0.9062rem; text-wrap: pretty; }
+.pattern .pmeta { font-family: var(--font-mono); font-size: 0.7812rem; color: var(--muted); overflow-wrap: anywhere; }
+ol.prows { list-style: none; margin: 0; padding: 0; display: grid; }
+ol.prows li { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 0.9062rem; line-height: 1.45; }
+ol.prows li:first-child { border-top: 0; }
+ol.prows .rl { font-family: var(--font-mono); font-size: 0.7812rem; font-weight: 500; color: var(--ink); padding-top: 1px; }
+ol.prows .rt { min-width: 0; overflow-wrap: anywhere; }
+.pattern .pnote { color: var(--muted); }
+.tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-top: -10px; }
+.tools .hint { margin: 0; flex: 1 1 220px; }
+.tool-btns { display: flex; gap: 8px; }
+.gear {
+  position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1.5px solid var(--line); border-radius: 50%; background: var(--surface);
+}
+.gear::after { content: ""; position: absolute; inset: -8px; }
+.gear svg { width: 14px; height: 14px; fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linecap: round; }
+.gear[aria-pressed="true"] { border-color: var(--hue); background: var(--hue); }
+.gear[aria-pressed="true"] svg { stroke: var(--surface); }
+.gear:focus-visible, .editor input:focus-visible, .editor select:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tile[data-editing="true"] .die-btn { border-color: var(--hue); }
+.editor { gap: 14px; }
+.editor-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field > span { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.editor input, .editor select {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 9px 10px; min-height: 42px; width: 100%; min-width: 0;
+}
+.ed-note { margin: 0; font-size: 0.8125rem; color: var(--muted); max-width: 62ch; text-wrap: pretty; }
+.faces-in { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.face-in { display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 6px; }
+.face-in .n { font-family: var(--font-mono); font-size: 0.7812rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.ed-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+.prefs { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
+.pref { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+.pref select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-height: 40px; }
+.pref input[type="checkbox"] { width: 1.2rem; height: 1.2rem; accent-color: var(--btn-bg); }
+.pref select:focus-visible, .pref input:focus-visible, .t-body input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+body[data-space="wide"] { line-height: 1.75; letter-spacing: 0.02em; word-spacing: 0.1em; }
+.die-btn.flat { padding-top: 14px; }
+#app[data-locked="true"] .tool-btns:not(.card-tools) { display: none; }
+.pattern .dir { font-size: 1.1rem; line-height: 1.6; font-weight: 600; max-width: 58ch; }
+.pattern .plan { font-size: 1.05rem; line-height: 1.6; max-width: 58ch; }
+.timer { display: grid; gap: 8px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.t-label { margin: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.t-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.t-disp { font-weight: 700; font-size: 2rem; font-variant-numeric: tabular-nums; min-width: 3.2ch; }
+.tbar { height: 12px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.tbar span { display: block; height: 100%; width: 100%; background: var(--h-d8); }
+.t-msg { margin: 0; font-weight: 600; min-height: 1.4em; }
+.t-body { display: grid; gap: 12px; padding: 0 14px 14px; }
+.t-body h3 { margin: 6px 0 0; font-size: 1.05rem; }
+.t-body .t-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.t-body .t-note { margin: 0; font-size: 0.88rem; color: var(--muted); max-width: 62ch; text-wrap: pretty; }
+.t-body .field > span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.t-body input[type="text"], .t-body input[type="password"] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; min-height: 42px; width: 100%; min-width: 0; }
+code { font-family: var(--font-mono); font-size: 0.92em; overflow-wrap: anywhere; }
+.credits { margin: 0; font-size: 0.7812rem; color: var(--muted); max-width: 62ch; text-wrap: pretty; }
+
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app" data-locked="false">
+  <header>
+    <h1>Choice Dice</h1>
+    <p class="lede">Roll seven dice to build a class activity: the task, the skill, how to work, how to show it, what help to use, and how long. Every die can be changed.</p>
+  </header>
+
+  <fieldset class="seg" id="subject">
+    <legend class="sr">Subject</legend>
+    <label><input type="radio" name="subject" value="ela"><span>ELA</span></label>
+    <label><input type="radio" name="subject" value="math"><span>Math</span></label>
+    <label><input type="radio" name="subject" value="study"><span>Study Skills</span></label>
+  </fieldset>
+
+  <div class="prefs">
+    <label class="pref"><span>Text size</span>
+      <select id="size"><option value="1">Normal</option><option value="1.15">Large</option><option value="1.3">Extra large</option></select>
+    </label>
+    <label class="pref"><input type="checkbox" id="space"><span>Wider spacing</span></label>
+  </div>
+
+  <div class="tray" id="tray"></div>
+  <button type="button" class="roll" id="roll">Roll the dice</button>
+  <div class="tools">
+    <p class="hint" id="hint">Tap a die to re-roll it. The sliders icon opens its settings. The dot leaves it out of the roll.</p>
+    <div class="tool-btns">
+      <button type="button" class="ghost" id="add">Add die</button>
+      <button type="button" class="ghost" id="reset">Reset set</button>
+    </div>
+  </div>
+  <section class="card editor" id="editor" aria-label="Die settings" hidden></section>
+
+  <section class="card" aria-labelledby="card-h">
+    <div class="card-head">
+      <h2 id="card-h">Your roll</h2>
+      <button type="button" class="ghost" id="copy">Copy</button>
+    </div>
+    <dl class="recipe" id="recipe"></dl>
+  </section>
+
+  <section class="block" aria-labelledby="task-h">
+    <div class="block-head">
+      <h2 id="task-h">Task card</h2>
+      <div class="tool-btns card-tools">
+        <button type="button" class="ghost" id="card-speak" hidden>Read aloud</button>
+        <button type="button" class="ghost" id="card-copy">Copy task</button>
+      </div>
+    </div>
+    <div class="pattern" id="taskcard"></div>
+  </section>
+
+  <section class="block" aria-labelledby="hist-h">
+    <div class="block-head">
+      <h2 id="hist-h">Recent rolls</h2>
+      <button type="button" class="ghost" id="clear" hidden>Clear</button>
+    </div>
+    <ul class="hist" id="hist"></ul>
+    <p class="empty" id="hist-empty">Rolls you make show up here.</p>
+  </section>
+
+  <section class="block" aria-labelledby="faces-h">
+    <h2 id="faces-h">Face tables</h2>
+    <p class="faces-intro" id="faces-intro"></p>
+    <div id="faces" style="display:grid;gap:8px"></div>
+  </section>
+
+  <details class="teacher" id="teacher">
+    <summary id="t-summary">Teacher tools</summary>
+    <div class="t-body" id="t-body"></div>
+  </details>
+
+  <p class="credits">Type: Lexend and Atkinson Hyperlegible, both under the SIL Open Font License. Dice artwork is original SVG. Task ideas are original and can be edited. Nothing typed here is sent anywhere, and there is no place to enter a student name.</p>
+</div>
+<div class="sr" role="status" aria-live="polite" id="live"></div>
+
+<script>
+(function () {
+  'use strict';
+  var STORE = 'choice-dice:v1';
+  // Teachers: to ship this page with your dice already set up (and locked), paste a settings code
+  // from Teacher tools between the quotes below, e.g.  var BAKED_CONFIG = "eyJ2Ijox...";
+  var BAKED_CONFIG = null;
+  var SIDES = [4, 6, 8, 10, 12, 20];
+  var MAX_DICE = 8;
+  var HUES = ['--h-d10', '--h-d12', '--h-d8', '--h-d6', '--h-d4', '--h-d20', '--h-x1', '--h-x2'];
+  var SUBJECT_KEYS = ['ela', 'math', 'study'];
+
+  // Faces are written as "Name | note". The note part is optional. All ideas are original.
+  var SUBJECTS = {
+    ela: {
+      label: 'ELA',
+      task: [
+        'Summarize It | Write 3 sentences: who it is about, what happened, and why it matters.',
+        'Word Detective | Find 5 words you do not know. Use clues to guess each meaning, then check a dictionary.',
+        'Draw the Scene | Sketch a scene from your reading. Write a caption that uses details from the text.',
+        'Main Idea Web | Put the main idea in the middle. Add 3 supporting details around it.',
+        'Opinion Paragraph | State your opinion, give two reasons, and write a closing sentence.',
+        'Character Interview | Write 4 questions for a character. Write how the character would answer each one.',
+        'Retell It | Tell the beginning, middle, and end in your own words.',
+        'Sentence Upgrade | Make 3 plain sentences better with strong verbs and specific details.',
+        'Compare Two | Compare two characters, texts, or ideas. Write one way they are alike and one way they are different.',
+        'Predict and Check | Write a prediction. Read on. Then write whether you were right.',
+        'Question Maker | Write 5 questions: 2 answered on the page, 2 you have to think about, and 1 you wonder.',
+        'Cause and Effect | Find 3 causes and their effects in what you read. Show them with arrows.',
+        'Vocabulary Cards | Make 4 cards. Each has the word, its meaning, a sentence, and a quick picture.',
+        'Text Evidence | Make a claim about the text. Back it up with a quote.',
+        'Theme Hunt | Write the theme in one sentence. Give two details that show it.',
+        'Rewrite the Ending | Write a new ending in 4 sentences. Keep the characters the same.',
+        'Point of View | Retell one scene from a different character’s point of view.',
+        'Fact or Opinion | Find 3 facts and 3 opinions. Sort them in a two-column chart.',
+        'Reading Reflection | Write what you read, one thing you learned, and what you will read next.',
+        'Free Choice | Read or write something you choose. Tell your teacher what you did.'
+      ],
+      focus: [
+        'Main idea | What the text is mostly about',
+        'Theme | The big message of the story',
+        'Vocabulary | Meanings of words',
+        'Text evidence | Proof from the text',
+        'Character | Traits, feelings, and changes',
+        'Setting | Where and when',
+        'Plot | What happens, in order',
+        'Point of view | Who is telling the story',
+        'Inference | What the text suggests',
+        'Author’s purpose | Why the author wrote it',
+        'Figurative language | Similes, metaphors, and more',
+        'Writing conventions | Capitals, punctuation, and spelling'
+      ]
+    },
+    math: {
+      label: 'Math',
+      task: [
+        'Ratio Recipe | Make a ratio table to double and triple a recipe.',
+        'Fraction Division Story | Write a story problem for 3/4 ÷ 1/2. Draw a picture to solve it.',
+        'Number Line Walk | Plot 6 positive and negative numbers. Then write them from least to greatest.',
+        'Expression Match | Write an expression for “5 more than twice a number n.” Make 3 more of your own.',
+        'Area Builder | Draw shapes on grid paper. Find the area of each one and show your steps.',
+        'Data Detective | Use a data set. Make a dot plot and find the median.',
+        'Percent Shopping | An item costs $20. Find 10% off and 25% off. Write each sale price.',
+        'Equation Balance | Solve 4 one-step equations. Check each answer.',
+        'Math in the Wild | Find 3 places math shows up at home. Write the numbers and what they mean.',
+        'Unit Rate Race | Find the unit rate for 3 deals. Decide which is the best buy.',
+        'Decimal Duel | Solve 4 decimal problems. Estimate first to check you are close.',
+        'Factors and Multiples | Find the greatest common factor and least common multiple of two numbers. Show your lists.',
+        'Coordinate Picture | Plot points on a coordinate grid to make a picture. Write each point.',
+        'Surface Area Net | Draw a net for a box. Find its surface area.',
+        'Volume Builder | Pick a box. Find its volume and show the formula you used.',
+        'Mean, Median, Mode | Find all three for 7 numbers. Say which describes the data best.',
+        'Write a Word Problem | Write a problem and solve it. Trade with a partner to check.',
+        'Error Hunt | Look at a solved problem with a mistake. Find it and fix it.',
+        'Absolute Value Story | Tell a story that uses absolute value, like a temperature or a bank balance.',
+        'Math Journal | Explain in words how you solved a problem from class.'
+      ],
+      focus: [
+        'Ratios | Comparing two amounts',
+        'Unit rates | Amount per one',
+        'Percents | Parts out of 100',
+        'Fraction division | Dividing with fractions',
+        'Decimals | Operations with decimals',
+        'Integers | Positive and negative numbers',
+        'Expressions | Writing and reading them',
+        'Equations | Solving one-step equations',
+        'Area and volume | Shapes and boxes',
+        'Coordinate plane | Plotting points',
+        'Data and graphs | Dot plots, mean, and median',
+        'Factors and multiples | GCF and LCM'
+      ]
+    },
+    study: {
+      label: 'Study Skills',
+      task: [
+        'Plan My Week | List your assignments and due dates. Number them from most urgent.',
+        'Chunk It | Break one big assignment into 4 small steps. Write the minutes each step needs.',
+        'Flashcard Five | Make 5 cards. Quiz yourself. Try the “again” pile once more.',
+        'Notes Remix | Rewrite today’s notes as a web, a list, or a sketch.',
+        'Backpack Reset | Clear out your backpack and binder. File each paper where it belongs.',
+        'Focus Sprint | Work on one task only until the timer ends. Write what distracted you.',
+        'Ask for Help | Write one question you have and who you can ask. Then ask.',
+        'Teach It Back | Teach a partner one thing you learned this week.',
+        'Check In With Me | Rate your effort from 1 to 5. Write one win and one next step.',
+        'Goal Setter | Write one goal for this week and 2 steps to reach it.',
+        'Highlight Smart | Read a paragraph. Highlight only the key words. Then write a summary.',
+        'Memory Trick | Make a rhyme, a short word, or a picture to remember 5 facts.',
+        'Study Spot | Set up your study spot. List what you need so nothing is missing.',
+        'Test Plan | Pick a test. Make a 3-day plan with what to study each day.',
+        'Break Plan | Plan a short break between work chunks. Decide what you will do and for how long.',
+        'Question Notes | Take notes in two columns: questions on one side, answers on the other.',
+        'Self-Quiz | Cover your notes. Write what you remember. Check and fix it.',
+        'Tidy Files | Rename and sort 5 files or links so you can find them later.',
+        'Reading Strategy | Preview the headings. Read. Then say a summary out loud.',
+        'Celebrate a Win | Write one thing you did well this week and why it worked.'
+      ],
+      focus: [
+        'Time | Using minutes well',
+        'Organization | Keeping things where you can find them',
+        'Note-taking | Getting the key ideas down',
+        'Memory | Making facts stick',
+        'Focus | Staying on one thing',
+        'Test prep | Getting ready to show what you know',
+        'Reading | Understanding what you read',
+        'Goals | Choosing and reaching a target',
+        'Asking for help | Speaking up when you are stuck',
+        'Self-checking | Looking over your own work',
+        'Effort | Trying and trying again',
+        'Staying calm | Handling stress'
+      ]
+    }
+  };
+
+  var GROUP = ['On your own | Work independently', 'With a partner | Take turns', 'In a small group | Share jobs', 'With the teacher | Check in as you go'];
+  var SHOW = ['Write it | Sentences or a list', 'Draw it | A picture with labels', 'Say it out loud | Explain to someone', 'Make a poster | Words and pictures', 'Act it out | Show the steps', 'Build a model | Use materials you have'];
+  var SUPPORT = ['Word bank | List the key words first', 'Sentence starters | Use them to begin', 'Graphic organizer | Fill in the boxes', 'Checklist | Check off each step', 'Worked example | Look at one first', 'Calculator or chart | Use it to check', 'Read aloud | Listen as you go', 'Timer | Watch the time'];
+  var BONUS = ['Brain break first | Stretch for one minute', 'Bonus challenge | Add one harder example', 'Teach someone | Explain it to a friend or family member', 'Use color | Color-code your work', 'Check twice | Look over your work before you turn it in', 'Add a picture | Draw something that helps', 'Make a goal | Say what you want to finish', 'Celebrate | Do a quick cheer when you finish', 'Try a new tool | Pick one you do not usually use', 'Start with what you know | Write it down first', 'Make it neat | Slow down and use your best handwriting', 'Pick a song | Hum a tune to help you remember'];
+
+  var TYPES = [
+    { id: 'task', label: 'Activity', kind: 'text', subj: true, blurb: 'What the student does. These lists change with the subject.' },
+    { id: 'focus', label: 'Skill focus', kind: 'text', subj: true, blurb: 'The skill or topic to practice. These lists change with the subject.' },
+    { id: 'group', label: 'Work style', kind: 'text', subj: false, blurb: 'Alone, with a partner, or with others.' },
+    { id: 'show', label: 'Show it by', kind: 'text', subj: false, blurb: 'How to show the work.' },
+    { id: 'support', label: 'Support', kind: 'text', subj: false, blurb: 'A tool or helper to use.' },
+    { id: 'minutes', label: 'Time', kind: 'num', start: 5, step: 1, unit: ['minute', 'minutes'], blurb: 'How long to work.' },
+    { id: 'count', label: 'How many', kind: 'num', start: 1, step: 1, unit: ['item', 'items'], blurb: 'How many questions, sentences, problems, or examples.' },
+    { id: 'bonus', label: 'Bonus twist', kind: 'text', subj: false, blurb: 'A small extra to try.' },
+    { id: 'custom', label: 'Custom list', kind: 'text', subj: false, blurb: 'Your own options. They appear as a note on the task card.' }
+  ];
+  var TYPE_BY = {}, TYPE_ORDER = {};
+  TYPES.forEach(function (t, i) { TYPE_BY[t.id] = t; TYPE_ORDER[t.id] = i; });
+  var GENERIC = { group: GROUP, show: SHOW, support: SUPPORT, bonus: BONUS };
+
+  var DEFAULT_SET = [[20, 'task'], [12, 'focus'], [4, 'group'], [6, 'show'], [8, 'support'], [10, 'minutes'], [10, 'count']];
+
+  function scale(pts, c, k) {
+    return pts.map(function (p) { return [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k]; });
+  }
+  var d12p = [[50, 5], [94, 37], [77, 90], [23, 90], [6, 37]];
+  var d12i = scale(d12p, [50, 56], 0.52);
+  var SHAPES = {
+    4: { pts: [[50, 9], [93, 86], [7, 86]], lines: [], extra: [[[71.5, 47.5], [50, 86], [28.5, 47.5]]], cy: 62, fs: 26, fs2: 22 },
+    6: { pts: [[16, 16], [84, 16], [84, 84], [16, 84]], lines: [], extra: [], cy: 50, fs: 30, fs2: 26 },
+    8: { pts: [[50, 5], [91, 50], [50, 95], [9, 50]], lines: [[9, 50, 91, 50]], extra: [], cy: 50, fs: 28, fs2: 24 },
+    10: { pts: [[50, 4], [92, 40], [50, 96], [8, 40]], lines: [[8, 40, 50, 66], [92, 40, 50, 66], [50, 66, 50, 96]], extra: [], cy: 40, fs: 26, fs2: 22 },
+    12: {
+      pts: d12p, extra: [d12i],
+      lines: d12p.map(function (p, i) { return [p[0], p[1], d12i[i][0], d12i[i][1]]; }),
+      cy: 56, fs: 24, fs2: 20
+    },
+    20: {
+      pts: [[50, 4], [91, 27], [91, 73], [50, 96], [9, 73], [9, 27]],
+      lines: [[50, 22, 50, 4], [50, 22, 9, 27], [50, 22, 91, 27], [80, 70, 91, 73], [80, 70, 50, 96], [20, 70, 9, 73], [20, 70, 50, 96]],
+      extra: [[[50, 22], [80, 70], [20, 70]]], cy: 54, fs: 24, fs2: 20
+    }
+  };
+
+
+  var state = { subject: 'ela', nextId: 1, dice: [], hist: [], editing: null, size: '1', space: false, locked: false, ph: '', cfgId: '' };
+
+  function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function lcf(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+  function clamp(v, a, b) { v = Math.round(Number(v)); if (!isFinite(v)) v = a; return Math.max(a, Math.min(b, v)); }
+  function rnd(n) {
+    try { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n + 1; }
+    catch (e) { return Math.floor(Math.random() * n) + 1; }
+  }
+  function find(id) {
+    for (var i = 0; i < state.dice.length; i++) if (state.dice[i].id === id) return state.dice[i];
+    return null;
+  }
+  function freeHue(list) {
+    var used = {};
+    list.forEach(function (d) { used[d.hue] = true; });
+    for (var i = 0; i < HUES.length; i++) if (!used[i]) return i;
+    return 0;
+  }
+  function makeDie(sides, type, list) {
+    var t = TYPE_BY[type];
+    return { id: state.nextId++, sides: sides, type: type, name: '', on: true, hue: freeHue(list || state.dice), start: t.start || 1, step: t.step || 1, faces: {}, result: 0 };
+  }
+  function defaultSet() {
+    state.dice = [];
+    state.nextId = 1;
+    DEFAULT_SET.forEach(function (s) { state.dice.push(makeDie(s[0], s[1])); });
+    state.editing = null;
+  }
+
+  // A tiny, non-secure hash. It keeps a passcode from being stored as plain text; it is not strong security.
+  function hashStr(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+    return (h >>> 0).toString(36);
+  }
+  function b64enc(str) { return btoa(unescape(encodeURIComponent(str))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+  function b64dec(code) {
+    code = code.replace(/-/g, '+').replace(/_/g, '/');
+    while (code.length % 4) code += '=';
+    return decodeURIComponent(escape(atob(code)));
+  }
+
+  function cleanDice(list) {
+    var out = [];
+    list.slice(0, MAX_DICE).forEach(function (r) {
+      if (!r || SIDES.indexOf(r.sides) < 0 || !TYPE_BY[r.type]) return;
+      var faces = {};
+      if (r.faces && typeof r.faces === 'object') {
+        Object.keys(r.faces).slice(0, 40).forEach(function (k) {
+          if (Array.isArray(r.faces[k])) faces[k] = r.faces[k].slice(0, 20).map(function (x) { return String(x).slice(0, 80); });
+        });
+      }
+      out.push({
+        id: out.length + 1, sides: r.sides, type: r.type, name: typeof r.name === 'string' ? r.name.slice(0, 24) : '',
+        on: r.on !== false, hue: clamp(r.hue, 0, HUES.length - 1), start: clamp(r.start, 0, 200), step: clamp(r.step, -50, 50),
+        faces: faces, result: 0
+      });
+    });
+    return out.length ? out : null;
+  }
+  function configObject() {
+    return {
+      v: 1, subject: state.subject, locked: state.locked, ph: state.ph,
+      dice: state.dice.map(function (d) { return { sides: d.sides, type: d.type, name: d.name, on: d.on, hue: d.hue, start: d.start, step: d.step, faces: d.faces }; })
+    };
+  }
+  function configCode() { return b64enc(JSON.stringify(configObject())); }
+  function applyConfig(c) {
+    if (!c || !Array.isArray(c.dice)) return false;
+    var out = cleanDice(c.dice);
+    if (!out) return false;
+    state.dice = out;
+    state.nextId = out.length + 1;
+    if (SUBJECT_KEYS.indexOf(c.subject) > -1) state.subject = c.subject;
+    state.locked = c.locked === true;
+    state.ph = typeof c.ph === 'string' ? c.ph.slice(0, 16) : '';
+    state.editing = null;
+    return true;
+  }
+  function parseCode(code) {
+    try {
+      var o = JSON.parse(b64dec(String(code).trim().replace(/^.*[#&]d=/, '')));
+      return o && o.v === 1 ? o : null;
+    } catch (e) { return null; }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORE, JSON.stringify({ cfg: configObject(), cfgId: state.cfgId, hist: state.hist, size: state.size, space: state.space }));
+    } catch (e) { /* storage unavailable */ }
+  }
+  // Settings from a shared link or a baked-in code apply once per distinct code. After that the saved copy is used.
+  function load(incomingCode) {
+    var local = null;
+    try { local = JSON.parse(localStorage.getItem(STORE) || 'null'); } catch (e) { local = null; }
+    if (local) {
+      if (Array.isArray(local.hist)) state.hist = local.hist.filter(function (h) { return typeof h === 'string'; }).slice(0, 8);
+      if (['1', '1.15', '1.3'].indexOf(local.size) > -1) state.size = local.size;
+      state.space = local.space === true;
+    }
+    var inc = incomingCode ? parseCode(incomingCode) : null;
+    var incId = incomingCode ? hashStr(String(incomingCode).trim().replace(/^.*[#&]d=/, '')) : '';
+    var src = null;
+    if (inc && (!local || !local.cfg || local.cfgId !== incId)) src = { cfg: inc, id: incId };
+    else if (local && local.cfg) src = { cfg: local.cfg, id: local.cfgId || '' };
+    if (src && applyConfig(src.cfg)) { state.cfgId = src.id; return true; }
+    return false;
+  }
+
+  function faceKey(d) { return d.type + (TYPE_BY[d.type].subj ? ':' + state.subject : '') + ':' + d.sides; }
+  function defaultFaces(d) {
+    var src = null;
+    if (d.type === 'task') src = SUBJECTS[state.subject].task;
+    else if (d.type === 'focus') src = SUBJECTS[state.subject].focus;
+    else if (GENERIC[d.type]) src = GENERIC[d.type];
+    var out = [];
+    for (var i = 0; i < d.sides; i++) out.push(src ? src[Math.floor(i * src.length / d.sides)] : 'Option ' + (i + 1));
+    return out;
+  }
+  function getFaces(d) {
+    var f = d.faces[faceKey(d)];
+    return (f && f.length === d.sides) ? f : defaultFaces(d);
+  }
+  function dieLabel(d) { return (d.name || '').trim() || TYPE_BY[d.type].label; }
+  function entry(d, n) {
+    var t = TYPE_BY[d.type];
+    if (t.kind === 'num') {
+      var v = d.start + (n - 1) * d.step;
+      return { num: v, value: plural(v, t.unit[0], t.unit[1]), note: d.type === 'count' ? 'questions, sentences, problems, or examples' : '' };
+    }
+    var raw = getFaces(d)[n - 1] || '';
+    var i = raw.indexOf('|');
+    var value = (i > -1 ? raw.slice(0, i) : raw).trim();
+    return { value: value || '(blank)', note: i > -1 ? raw.slice(i + 1).trim() : '' };
+  }
+
+  var $ = function (id) { return document.getElementById(id); };
+  var trayEl = $('tray'), editorEl = $('editor'), recipeEl = $('recipe'), histEl = $('hist'), histEmpty = $('hist-empty');
+  var clearBtn = $('clear'), facesEl = $('faces'), rollBtn = $('roll'), copyBtn = $('copy'), liveEl = $('live');
+  var addBtn = $('add'), resetBtn = $('reset'), cardEl = $('taskcard'), cardCopy = $('card-copy');
+  var busy = false, taskText = '';
+
+  function sortedActive() {
+    return state.dice.map(function (d, i) { return { d: d, i: i }; })
+      .filter(function (x) { return x.d.on; })
+      .sort(function (a, b) { return (TYPE_ORDER[a.d.type] - TYPE_ORDER[b.d.type]) || (a.i - b.i); })
+      .map(function (x) { return x.d; });
+  }
+  function activeIds() { return state.dice.filter(function (d) { return d.on; }).map(function (d) { return d.id; }); }
+
+  function dieSVG(sides, val, on) {
+    var s = SHAPES[sides];
+    var pts = s.pts.map(function (p) { return p.join(','); }).join(' ');
+    var cx = 0, cy = 0;
+    s.pts.forEach(function (p) { cx += p[0]; cy += p[1]; });
+    cx /= s.pts.length; cy /= s.pts.length;
+    var inner = s.pts.map(function (p) {
+      return [(cx + (p[0] - cx) * 0.84).toFixed(1), (cy + (p[1] - cy) * 0.84).toFixed(1)].join(',');
+    }).join(' ');
+    var facets = s.lines.map(function (l) {
+      return '<line x1="' + l[0] + '" y1="' + l[1] + '" x2="' + l[2] + '" y2="' + l[3] + '"/>';
+    }).join('') + s.extra.map(function (poly) {
+      return '<polygon points="' + poly.map(function (p) { return p[0] + ',' + p[1]; }).join(' ') + '"/>';
+    }).join('');
+    var text = on ? val : '–';
+    var fs = String(text).length > 1 ? s.fs2 : s.fs;
+    return '<svg class="die" viewBox="0 0 100 100" aria-hidden="true" focusable="false">' +
+      '<polygon class="body" points="' + pts + '"/>' +
+      '<polygon class="stitch" points="' + inner + '"/>' +
+      '<g class="facets">' + facets + '</g>' +
+      '<text class="face" x="50" y="' + (s.cy + fs * 0.34).toFixed(1) + '" font-size="' + fs + '">' + text + '</text></svg>';
+  }
+
+  function tileValue(d) { return d.on ? entry(d, d.result).value : 'Not in roll'; }
+
+  function setFace(id, n) {
+    var d = find(id), tile = trayEl.querySelector('[data-tile="' + id + '"]');
+    if (!d || !tile) return;
+    var s = SHAPES[d.sides], fs = String(n).length > 1 ? s.fs2 : s.fs, t = tile.querySelector('.face');
+    t.textContent = n;
+    t.setAttribute('font-size', fs);
+    t.setAttribute('y', (s.cy + fs * 0.34).toFixed(1));
+  }
+  function setValue(id) {
+    var d = find(id), tile = trayEl.querySelector('[data-tile="' + id + '"]');
+    if (d && tile) tile.querySelector('.val').textContent = tileValue(d);
+  }
+
+  function renderCard() {
+    var act = sortedActive();
+    if (!act.length) {
+      recipeEl.innerHTML = '<p class="empty">Turn on at least one die to build a roll.</p>';
+      return;
+    }
+    recipeEl.innerHTML = act.map(function (d) {
+      var e = entry(d, d.result);
+      return '<div class="rrow" style="--hue:var(' + HUES[d.hue] + ')"><dt><span>' + esc(dieLabel(d)) + '</span><span class="dn">D' + d.sides + '</span></dt>' +
+        '<dd><span class="rv">' + esc(e.value) + '</span>' + (e.note ? '<span class="rn">' + esc(e.note) + '</span>' : '') + '</dd></div>';
+    }).join('');
+  }
+  function summary() {
+    return SUBJECTS[state.subject].label + ' · ' + sortedActive().map(function (d) { return entry(d, d.result).value; }).join(' · ');
+  }
+  function cardText() {
+    var lines = [SUBJECTS[state.subject].label + ' roll'];
+    sortedActive().forEach(function (d) {
+      var e = entry(d, d.result);
+      lines.push(dieLabel(d) + ': ' + e.value + (e.note ? ' (' + e.note + ')' : ''));
+    });
+    return lines.join('\n');
+  }
+
+  function renderHistory() {
+    histEl.innerHTML = state.hist.map(function (h) { return '<li>' + esc(h) + '</li>'; }).join('');
+    histEmpty.hidden = state.hist.length > 0;
+    clearBtn.hidden = state.hist.length === 0;
+  }
+
+  function numPreview(d) {
+    var a = d.start, b = d.start + (d.sides - 1) * d.step;
+    return 'Faces run ' + a + ', ' + (a + d.step) + ' … ' + b + '.';
+  }
+
+  function renderEditor() {
+    var d = state.locked ? null : find(state.editing);
+    if (!d) { editorEl.hidden = true; editorEl.innerHTML = ''; return; }
+    editorEl.hidden = false;
+    var t = TYPE_BY[d.type];
+    var html = '<div class="editor-head"><h2>Customize D' + d.sides + '</h2><button type="button" class="ghost" data-act="close">Done</button></div>' +
+      '<div class="fields">' +
+      '<label class="field"><span>Name</span><input type="text" id="ed-name" maxlength="24" placeholder="' + esc(t.label) + '" value="' + esc(d.name) + '"></label>' +
+      '<label class="field"><span>List</span><select id="ed-type">' + TYPES.map(function (x) {
+        return '<option value="' + x.id + '"' + (x.id === d.type ? ' selected' : '') + '>' + esc(x.label) + '</option>';
+      }).join('') + '</select></label>' +
+      '<label class="field"><span>Sides</span><select id="ed-sides">' + SIDES.map(function (n) {
+        return '<option value="' + n + '"' + (n === d.sides ? ' selected' : '') + '>D' + n + '</option>';
+      }).join('') + '</select></label>';
+    if (t.kind === 'num') {
+      html += '<label class="field"><span>First face</span><input type="number" id="ed-start" min="0" max="200" step="1" inputmode="numeric" value="' + d.start + '"></label>' +
+        '<label class="field"><span>Step between faces</span><input type="number" id="ed-step" min="-50" max="50" step="1" inputmode="numeric" value="' + d.step + '"></label>';
+    }
+    html += '</div><p class="ed-note">' + esc(t.blurb) + (t.kind === 'num' ? ' <span id="ed-preview">' + esc(numPreview(d)) + '</span>' : '') + '</p>';
+    if (t.kind === 'text') {
+      var faces = getFaces(d);
+      html += '<p class="ed-note">Edit any face. Type a bar to add a note after the name, like Garter | Knit every row.' +
+        (t.subj ? ' These change with the subject, so each subject keeps its own edits.' : '') + '</p><div class="faces-in">' +
+        faces.map(function (f, i) {
+          return '<label class="face-in"><span class="n">' + (i + 1) + '</span><input type="text" id="ed-face-' + (i + 1) + '" data-face="' + (i + 1) + '" maxlength="80" value="' + esc(f) + '"></label>';
+        }).join('') + '</div>';
+    }
+    html += '<div class="ed-actions">' +
+      (t.kind === 'text' ? '<button type="button" class="ghost" data-act="reset-faces">Reset faces</button>' : '') +
+      '<button type="button" class="ghost" data-act="reset-die">Reset this die</button>' +
+      '<button type="button" class="ghost" data-act="remove"' + (state.dice.length < 2 ? ' disabled' : '') + '>Remove die</button></div>';
+    editorEl.innerHTML = html;
+  }
+
+  function renderFaces() {
+    var open = {};
+    Array.prototype.forEach.call(facesEl.querySelectorAll('details[open]'), function (el) { open[el.getAttribute('data-id')] = true; });
+    $('faces-intro').textContent = 'Every die has its own list. Open a die\u2019s settings with the sliders icon to change its list, sides or faces. Activity and skill lists change with the subject.';
+    facesEl.innerHTML = state.dice.map(function (d) {
+      var t = TYPE_BY[d.type], items = [];
+      for (var n = 1; n <= d.sides; n++) {
+        var e = entry(d, n);
+        items.push('<li data-die="' + d.id + '" data-n="' + n + '"><span class="n">' + n + '</span><span>' + esc(e.value) +
+          (t.kind === 'text' && e.note ? ' <span class="ab">' + esc(e.note) + '</span>' : '') + '</span></li>');
+      }
+      return '<details data-id="' + d.id + '"' + (open[d.id] ? ' open' : '') + ' style="--hue:var(' + HUES[d.hue] + ')">' +
+        '<summary><span class="dn">D' + d.sides + '</span><span>' + esc(dieLabel(d)) + '</span><span class="sub">' + esc(t.label) + '</span></summary>' +
+        '<ol class="fl">' + items.join('') + '</ol></details>';
+    }).join('');
+    markCurrent();
+  }
+  function markCurrent() {
+    Array.prototype.forEach.call(facesEl.querySelectorAll('li'), function (li) {
+      var d = find(+li.getAttribute('data-die'));
+      li.classList.toggle('is-current', !!d && d.on && d.result === +li.getAttribute('data-n'));
+    });
+  }
+
+  function refresh() { renderTray(); renderCard(); writeCard(); renderFaces(); updateShare(); save(); }
+  function refreshAll() { renderEditor(); refresh(); renderLockState(); }
+
+  function finishRoll() {
+    renderCard();
+    writeCard();
+    markCurrent();
+    if (activeIds().length) {
+      state.hist.unshift(summary());
+      state.hist = state.hist.slice(0, 8);
+      liveEl.textContent = summary();
+    }
+    renderHistory();
+    save();
+    busy = false;
+    rollBtn.disabled = false;
+    rollBtn.textContent = 'Roll the dice';
+  }
+
+  function animate(ids) {
+    if (busy) return;
+    if (!ids.length) { liveEl.textContent = 'Turn on at least one die to roll.'; return; }
+    busy = true;
+    var final = {};
+    ids.forEach(function (id) { final[id] = rnd(find(id).sides); });
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* ignore */ }
+    if (reduce) {
+      ids.forEach(function (id) { var d = find(id); d.result = final[id]; setFace(id, final[id]); setValue(id); });
+      finishRoll();
+      return;
+    }
+    rollBtn.disabled = true;
+    rollBtn.textContent = 'Rolling…';
+    var remaining = ids.length;
+    ids.forEach(function (id, i) {
+      var tile = trayEl.querySelector('[data-tile="' + id + '"]');
+      if (tile) tile.classList.add('rolling');
+      var stop = 520 + i * 110, t0 = Date.now();
+      var iv = setInterval(function () {
+        var d = find(id);
+        if (Date.now() - t0 >= stop || !d) {
+          clearInterval(iv);
+          var tl = trayEl.querySelector('[data-tile="' + id + '"]');
+          if (tl) tl.classList.remove('rolling');
+          if (d) { d.result = final[id]; setFace(id, final[id]); setValue(id); }
+          remaining -= 1;
+          if (remaining === 0) finishRoll();
+        } else {
+          setFace(id, rnd(d.sides));
+        }
+      }, 70);
+    });
+  }
+
+  function copyText(text, btn, idle) {
+    function done(ok) {
+      btn.textContent = ok ? 'Copied' : 'Could not copy';
+      setTimeout(function () { btn.textContent = idle; }, 1800);
+    }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      done(ok);
+    }
+    try { navigator.clipboard.writeText(text).then(function () { done(true); }, fallback); } catch (e) { fallback(); }
+  }
+
+  trayEl.addEventListener('click', function (ev) {
+    var pool = ev.target.closest('[data-pool]');
+    if (pool) {
+      if (busy) return;
+      var pd = find(+pool.getAttribute('data-pool'));
+      if (pd) pd.on = !pd.on;
+      refresh();
+      return;
+    }
+    var edit = ev.target.closest('[data-edit]');
+    if (edit) {
+      var eid = +edit.getAttribute('data-edit');
+      state.editing = state.editing === eid ? null : eid;
+      renderTray(); renderEditor();
+      if (state.editing) { try { editorEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* ignore */ } }
+      return;
+    }
+    var die = ev.target.closest('[data-roll]');
+    if (die) {
+      var d = find(+die.getAttribute('data-roll'));
+      if (d && d.on) animate([d.id]);
+    }
+  });
+  rollBtn.addEventListener('click', function () { animate(activeIds()); });
+  copyBtn.addEventListener('click', function () { copyText(cardText(), copyBtn, 'Copy'); });
+  cardCopy.addEventListener('click', function () { copyText(taskText, cardCopy, 'Copy task'); });
+  clearBtn.addEventListener('click', function () { state.hist = []; renderHistory(); save(); });
+
+  editorEl.addEventListener('input', function (ev) {
+    var el = ev.target, d = find(state.editing);
+    if (!d) return;
+    if (el.id === 'ed-name') { d.name = el.value.slice(0, 24); refresh(); }
+    else if (el.id === 'ed-start' || el.id === 'ed-step') {
+      if (el.id === 'ed-start') d.start = clamp(el.value, 0, 200); else d.step = clamp(el.value, -50, 50);
+      var pv = $('ed-preview');
+      if (pv) pv.textContent = numPreview(d);
+      refresh();
+    } else if (el.getAttribute('data-face')) {
+      var arr = getFaces(d).slice();
+      arr[+el.getAttribute('data-face') - 1] = el.value.slice(0, 80);
+      d.faces[faceKey(d)] = arr;
+      refresh();
+    }
+  });
+  editorEl.addEventListener('change', function (ev) {
+    var el = ev.target, d = find(state.editing);
+    if (!d) return;
+    if (el.id === 'ed-sides') {
+      d.sides = +el.value;
+      if (d.result > d.sides || !d.result) d.result = rnd(d.sides);
+      refreshAll();
+    } else if (el.id === 'ed-type') {
+      d.type = el.value;
+      var t = TYPE_BY[d.type];
+      if (t.kind === 'num') { d.start = t.start; d.step = t.step; }
+      refreshAll();
+    }
+  });
+  editorEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-act]'), d = find(state.editing);
+    if (!btn || !d) return;
+    var act = btn.getAttribute('data-act');
+    if (act === 'close') { state.editing = null; renderTray(); renderEditor(); }
+    else if (act === 'reset-faces') { delete d.faces[faceKey(d)]; refreshAll(); }
+    else if (act === 'reset-die') {
+      var t = TYPE_BY[d.type];
+      d.faces = {}; d.name = ''; d.start = t.start || 1; d.step = t.step || 1;
+      refreshAll();
+    } else if (act === 'remove' && state.dice.length > 1) {
+      state.dice = state.dice.filter(function (x) { return x.id !== d.id; });
+      state.editing = null;
+      refreshAll();
+    }
+  });
+
+  addBtn.addEventListener('click', function () {
+    if (busy) return;
+    if (state.dice.length >= MAX_DICE) {
+      addBtn.textContent = 'Eight dice is the limit';
+      setTimeout(function () { addBtn.textContent = 'Add die'; }, 1800);
+      return;
+    }
+    var nd = makeDie(6, 'custom');
+    nd.result = rnd(6);
+    state.dice.push(nd);
+    state.editing = nd.id;
+    refreshAll();
+    try { editorEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (e) { /* ignore */ }
+  });
+  var resetArmed = false, resetTimer = null;
+  resetBtn.addEventListener('click', function () {
+    if (busy) return;
+    if (!resetArmed) {
+      resetArmed = true;
+      resetBtn.textContent = 'Tap again to reset';
+      resetTimer = setTimeout(function () { resetArmed = false; resetBtn.textContent = 'Reset set'; }, 3000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    resetArmed = false;
+    resetBtn.textContent = 'Reset set';
+    defaultSet();
+    state.dice.forEach(function (d) { d.result = rnd(d.sides); });
+    refreshAll();
+  });
+
+  $('subject').addEventListener('change', function (ev) {
+    if (ev.target && ev.target.name === 'subject') {
+      state.subject = ev.target.value;
+      refreshAll();
+    }
+  });
+
+
+  var appEl = $('app'), hintEl = $('hint'), speakBtn = $('card-speak'), teacherEl = $('t-body'), summaryEl = $('t-summary');
+  var HINT_OPEN = 'Tap a die to re-roll it. The sliders icon opens its settings. The dot leaves it out of the roll.';
+  var HINT_LOCKED = 'Tap a die to re-roll just that one.';
+  var canSpeak = false;
+  try { canSpeak = 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined'; } catch (e) { canSpeak = false; }
+  var taskSpeak = '';
+  var timer = { total: 600, left: 600, running: false, end: 0, iv: null, from: 0 };
+
+  function renderTray() {
+    trayEl.innerHTML = state.dice.map(function (d) {
+      var label = dieLabel(d), ctl = '';
+      if (!state.locked) {
+        ctl = '<button type="button" class="gear" data-edit="' + d.id + '" aria-pressed="' + (state.editing === d.id) + '" aria-label="Customize D' + d.sides + ', ' + esc(label) + '">' +
+          '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 4h10M2 7h10M2 10h10"/></svg></button>' +
+          '<button type="button" class="pool" data-pool="' + d.id + '" aria-pressed="' + d.on + '" aria-label="Include D' + d.sides + ', ' + esc(label) + ' in the roll">' +
+          '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 7.5l2.8 2.8L11 4.5"/></svg></button>';
+      }
+      return '<div class="tile" data-tile="' + d.id + '" data-on="' + d.on + '" data-editing="' + (state.editing === d.id) + '" style="--hue:var(' + HUES[d.hue] + ')">' +
+        '<button type="button" class="die-btn' + (state.locked ? ' flat' : '') + '" data-roll="' + d.id + '" aria-label="Re-roll D' + d.sides + ', ' + esc(label) + '">' +
+        dieSVG(d.sides, d.result, d.on) +
+        '<span class="tag"><span class="dn">D' + d.sides + '</span><span class="rl">' + esc(label) + '</span></span>' +
+        '<span class="val">' + esc(tileValue(d)) + '</span></button>' + ctl + '</div>';
+    }).join('');
+  }
+
+  /* ---------- task card ---------- */
+  function strip(s) { return s.replace(/[.!]+$/, ''); }
+  function fmt(sec) { var m = Math.floor(sec / 60), s = sec % 60; return m + ':' + (s < 10 ? '0' : '') + s; }
+  function stopTimer() { timer.running = false; if (timer.iv) { clearInterval(timer.iv); timer.iv = null; } }
+  function updateTimerUI() {
+    var d = $('t-disp'), f = $('t-fill'), b = $('t-start'), m = $('tm-msg');
+    if (!d) return;
+    d.textContent = fmt(timer.left);
+    f.style.width = (timer.total ? Math.round(timer.left / timer.total * 100) : 0) + '%';
+    b.textContent = timer.running ? 'Pause' : (timer.left > 0 && timer.left < timer.total ? 'Resume' : 'Start');
+    m.textContent = timer.left === 0 ? 'Time is up. Check your work.' : '';
+  }
+  function tick() {
+    timer.left = Math.max(0, Math.ceil((timer.end - Date.now()) / 1000));
+    if (timer.left === 0) stopTimer();
+    updateTimerUI();
+  }
+  function timerHTML() {
+    return '<div class="timer"><p class="t-label">Timer</p><div class="t-row"><span class="t-disp" id="t-disp">10:00</span>' +
+      '<button type="button" class="ghost" id="t-start" data-act="tstart">Start</button>' +
+      '<button type="button" class="ghost" data-act="treset">Reset</button></div>' +
+      '<div class="tbar" aria-hidden="true"><span id="t-fill"></span></div><p class="t-msg" id="tm-msg" role="status"></p></div>';
+  }
+
+  function writeCard() {
+    var act = sortedActive();
+    if (!act.length) {
+      taskText = ''; taskSpeak = '';
+      cardEl.innerHTML = '<p class="pnote">Turn on at least one die to build a task card.</p>';
+      cardCopy.hidden = true; speakBtn.hidden = true;
+      return;
+    }
+    cardCopy.hidden = false; speakBtn.hidden = !canSpeak;
+    function first(type) { for (var i = 0; i < act.length; i++) if (act[i].type === type) return act[i]; return null; }
+    function val(d) { return d ? entry(d, d.result) : null; }
+    var task = val(first('task')), focus = val(first('focus')), group = val(first('group')), show = val(first('show'));
+    var support = val(first('support')), tm = val(first('minutes')), ct = val(first('count')), bonus = val(first('bonus'));
+    var mins = tm ? clamp(tm.num, 1, 120) : 10;
+
+    var parts = [];
+    if (task) parts.push('Work on "' + task.value + '".');
+    if (focus) parts.push('Skill focus: ' + lcf(focus.value) + '.');
+    if (group) parts.push('Work ' + lcf(group.value) + '.');
+    if (show) parts.push('Show it: ' + lcf(show.value) + '.');
+    if (support) parts.push('Support: ' + lcf(support.value) + '.');
+    if (tm) parts.push('Work for ' + tm.value + '.');
+    if (ct) parts.push('Aim for ' + ct.value + '.');
+    if (bonus) parts.push('Bonus: ' + lcf(strip(bonus.value)) + '.');
+    var plan = parts.join(' ');
+
+    var extras = [];
+    act.forEach(function (d) {
+      if (d.type !== 'custom') return;
+      var e = entry(d, d.result);
+      extras.push(dieLabel(d) + ': ' + e.value + (e.note ? ' (' + e.note + ')' : '') + '.');
+    });
+    var title = task ? task.value : 'Your plan';
+    var dirs = task && task.note ? task.note : '';
+
+    if (timer.from !== mins) { stopTimer(); timer.total = mins * 60; timer.left = timer.total; timer.from = mins; }
+
+    cardEl.innerHTML = '<h3>' + esc(title) + '</h3>' + (dirs ? '<p class="dir">' + esc(dirs) + '</p>' : '') +
+      '<p class="plan">' + esc(plan) + '</p>' +
+      extras.map(function (x) { return '<p class="pnote">' + esc(x) + '</p>'; }).join('') + timerHTML();
+    updateTimerUI();
+    taskText = [title, dirs, '', plan].concat(extras).filter(function (x, i) { return x || i === 2; }).join('\n');
+    taskSpeak = title + '. ' + dirs + ' ' + plan;
+  }
+
+  cardEl.addEventListener('click', function (ev) {
+    var btn = ev.target.closest('[data-act]');
+    if (!btn) return;
+    var act = btn.getAttribute('data-act');
+    if (act === 'tstart') {
+      if (timer.running) { stopTimer(); updateTimerUI(); return; }
+      if (timer.left <= 0) timer.left = timer.total;
+      timer.running = true;
+      timer.end = Date.now() + timer.left * 1000;
+      timer.iv = setInterval(tick, 250);
+      updateTimerUI();
+    } else if (act === 'treset') { stopTimer(); timer.left = timer.total; updateTimerUI(); }
+  });
+  speakBtn.addEventListener('click', function () {
+    try {
+      window.speechSynthesis.cancel();
+      var u = new SpeechSynthesisUtterance(taskSpeak);
+      u.rate = 0.9;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* ignore */ }
+  });
+
+  /* ---------- display preferences ---------- */
+  function applyPrefs() {
+    $('size').value = state.size;
+    $('space').checked = state.space;
+    document.documentElement.style.fontSize = (16 * parseFloat(state.size)) + 'px';
+    document.body.setAttribute('data-space', state.space ? 'wide' : 'normal');
+  }
+  $('size').addEventListener('change', function (ev) { state.size = ev.target.value; save(); applyPrefs(); });
+  $('space').addEventListener('change', function (ev) { state.space = ev.target.checked; save(); applyPrefs(); });
+
+  /* ---------- lock and share ---------- */
+  function shareLink() {
+    var base = '';
+    try { base = location.href.split('#')[0]; } catch (e) { base = ''; }
+    return base + '#d=' + configCode();
+  }
+  function updateShare() {
+    var el = $('share-link');
+    if (el) el.value = shareLink();
+  }
+  function say(msg) { var m = $('t-msg'); if (m) m.textContent = msg; }
+
+  function renderTeacher() {
+    var h;
+    if (state.locked) {
+      h = '<p class="t-note">Die settings are locked. Students can still roll the dice, change the subject, and change the text size.</p>' +
+        (state.ph ? '<label class="field"><span>Passcode</span><input type="password" id="unlock-pass" autocomplete="off" maxlength="12"></label>' : '') +
+        '<div class="t-btns"><button type="button" class="ghost" id="unlock-btn">Unlock die settings</button></div>';
+    } else {
+      h = '<p class="t-note">Set up the dice the way you want. Then lock the settings before you share the page. You can also leave them unlocked.</p>' +
+        '<label class="field"><span>Passcode (optional)</span><input type="password" id="lock-pass" autocomplete="off" maxlength="12" placeholder="Up to 12 characters"></label>' +
+        '<div class="t-btns"><button type="button" class="ghost" id="lock-btn">Lock die settings</button></div>' +
+        '<p class="t-note">A passcode stops students from unlocking by accident. It is not strong security.</p>';
+    }
+    h += '<p class="t-msg" id="t-msg" role="status"></p>' +
+      '<h3>Share with students</h3>' +
+      '<p class="t-note">The link carries your dice and your lock setting, so lock first if you want it locked. It works on GitHub Pages and most other sites. It does not work inside an Apps Script page or a preview. For those, copy the file line and paste it over the line <code>var BAKED_CONFIG = null;</code> near the top of the page file.</p>' +
+      '<label class="field"><span>Student link</span><input type="text" id="share-link" readonly value=""></label>' +
+      '<div class="t-btns"><button type="button" class="ghost" id="copy-link">Copy link</button><button type="button" class="ghost" id="copy-line">Copy file line</button></div>' +
+      '<label class="field"><span>Load a settings code or link</span><input type="text" id="import-code" autocomplete="off" placeholder="Paste here"></label>' +
+      '<div class="t-btns"><button type="button" class="ghost" id="import-btn">Load</button></div>' +
+      '<div class="t-btns"><button type="button" class="ghost" id="reset-all"' + (state.locked ? ' disabled' : '') + '>Reset everything</button></div>';
+    teacherEl.innerHTML = h;
+    updateShare();
+  }
+  function renderLockState() {
+    appEl.setAttribute('data-locked', String(state.locked));
+    hintEl.textContent = state.locked ? HINT_LOCKED : HINT_OPEN;
+    summaryEl.textContent = state.locked ? 'Teacher tools (locked)' : 'Teacher tools';
+    renderTeacher();
+  }
+
+  teacherEl.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button');
+    if (!b) return;
+    var id = b.id;
+    if (id === 'lock-btn') {
+      var p = ($('lock-pass').value || '').trim().slice(0, 12);
+      state.ph = p ? hashStr('cd1:' + p) : '';
+      state.locked = true; state.editing = null;
+      save(); refreshAll();
+      say(p ? 'Locked with your passcode.' : 'Locked with no passcode.');
+    } else if (id === 'unlock-btn') {
+      var el = $('unlock-pass'), entered = el ? el.value.trim() : '';
+      if (state.ph && hashStr('cd1:' + entered) !== state.ph) { say('That passcode does not match.'); return; }
+      state.locked = false; state.ph = '';
+      save(); refreshAll();
+      say('Unlocked.');
+    } else if (id === 'copy-link') {
+      copyText(shareLink(), b, 'Copy link');
+    } else if (id === 'copy-line') {
+      copyText('var BAKED_CONFIG = "' + configCode() + '";', b, 'Copy file line');
+    } else if (id === 'import-btn') {
+      var raw = $('import-code').value;
+      var cfg = parseCode(raw);
+      if (!cfg || !applyConfig(cfg)) { say('That code did not work. Check that you pasted all of it.'); return; }
+      state.cfgId = hashStr(String(raw).trim().replace(/^.*[#&]d=/, ''));
+      state.dice.forEach(function (d) { d.result = rnd(d.sides); });
+      save(); applyPrefs(); refreshAll();
+      Array.prototype.forEach.call(document.querySelectorAll('input[name="subject"]'), function (r) { r.checked = r.value === state.subject; });
+      say('Settings loaded.');
+    } else if (id === 'reset-all' && !state.locked) {
+      if (b.getAttribute('data-armed') !== '1') {
+        b.setAttribute('data-armed', '1'); b.textContent = 'Tap again to reset';
+        setTimeout(function () { b.setAttribute('data-armed', ''); b.textContent = 'Reset everything'; }, 3000);
+        return;
+      }
+      defaultSet(); state.dice.forEach(function (d) { d.result = rnd(d.sides); });
+      state.hist = []; state.size = '1'; state.space = false; state.cfgId = '';
+      save(); applyPrefs(); refreshAll(); renderHistory();
+    }
+  });
+
+  function init() {
+    var hashCode = null;
+    try { var m = /^#d=([A-Za-z0-9_-]+)$/.exec(location.hash); if (m) hashCode = m[1]; } catch (e) { hashCode = null; }
+    var incoming = hashCode || (typeof BAKED_CONFIG === 'string' && BAKED_CONFIG ? BAKED_CONFIG : null);
+    if (!load(incoming)) defaultSet();
+    state.dice.forEach(function (d) { d.result = rnd(d.sides); });
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="subject"]'), function (r) { r.checked = r.value === state.subject; });
+    applyPrefs();
+    renderTray(); renderEditor(); renderCard(); writeCard(); renderHistory(); renderFaces(); renderLockState();
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>
